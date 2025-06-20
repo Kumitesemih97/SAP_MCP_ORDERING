@@ -1,0 +1,93 @@
+{
+  "name": "sap-mcp-ordering-system",
+  "version": "2.1.0",
+  "description": "SAP MCP Ordering System with Qwen 3:1.7b AI Integration",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --loader ts-node/esm server.ts",
+    "dev": "nodemon --loader ts-node/esm server.ts",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "compile": "tsc && npm run copy-static",
+    "copy-static": "cp public/index.html public/styles.css dist/public/ 2>/dev/null || :",
+    "clean": "rm -rf dist public/*.js public/*.js.map public/*.d.ts",
+    "lint": "eslint src/**/*.ts server.ts --fix",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "npm install && npm run build",
+    "serve": "npm run build && npm start",
+    "debug": "node --inspect --loader ts-node/esm server.ts"
+  },
+  "keywords": [
+    "sap",
+    "mcp",
+    "ordering",
+    "ai",
+    "qwen",
+    "ollama",
+    "typescript",
+    "node.js",
+    "express"
+  ],
+  "author": "SAP MCP Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/sap-mcp-ordering-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/sap-mcp-ordering-system/issues"
+  },
+  "homepage": "https://github.com/your-org/sap-mcp-ordering-system#readme",
+  "nodemonConfig": {
+    "watch": [
+      "src",
+      "server.ts",
+      "mcp-client.ts"
+    ],
+    "ext": "ts,json",
+    "ignore": [
+      "public/**/*",
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "exec": "node --loader ts-node/esm server.ts"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "@typescript-eslint/recommended"
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "prefer-const": "error",
+      "no-var": "error"
+    }
+  }
+}

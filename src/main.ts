@@ -246,7 +246,12 @@ class AppInitializer {
    */
   private async checkOllamaAuth(): Promise<void> {
     try {
-      const res = await fetch('/api/ollama/auth-status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch('/api/ollama/auth-status', { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       const data: { authenticated: boolean; reason?: string } = await res.json();
 
       if (data.authenticated) {
@@ -260,8 +265,12 @@ class AppInitializer {
         console.warn('⚠️ Ollama cloud model unavailable:', data.reason);
         this.notifications.warning('AI model unavailable. Basic functions remain active.');
       }
-    } catch {
-      console.warn('⚠️ Could not check Ollama auth status');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('⚠️ Ollama auth check timed out');
+      } else {
+        console.warn('⚠️ Could not check Ollama auth status', error);
+      }
     }
   }
 
@@ -338,7 +347,12 @@ class AppInitializer {
     // Poll auth status every 3 s until authenticated
     const pollInterval = setInterval(async () => {
       try {
-        const res = await fetch('/api/ollama/auth-status');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const res = await fetch('/api/ollama/auth-status', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         const data: { authenticated: boolean } = await res.json();
         if (data.authenticated) {
           clearInterval(pollInterval);
@@ -347,7 +361,9 @@ class AppInitializer {
           this.notifications.success('Signed in to Ollama — Gemma4 31B cloud model ready!');
           console.log('✅ Ollama cloud auth confirmed');
         }
-      } catch { /* ignore transient errors */ }
+      } catch (error) {
+        console.warn('Polling error:', error);
+      }
     }, 3000);
   }
 

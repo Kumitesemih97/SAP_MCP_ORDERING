@@ -361,8 +361,17 @@ export class SAPOrderingSystem {
 
       const result: APIResponse<OrderData> = await response.json();
 
-      if (result.success && result.orderData) {
-        await this.handleSuccessfulOrder(result.orderData, message);
+      if (result.success) {
+        if (result.orderData) {
+          await this.handleSuccessfulOrder(result.orderData, message);
+        } else if (result.message) {
+          this.addMessage(result.message, 'ai');
+        } else {
+          throw new OrderSystemError(
+            result.error || 'Processing failed without a response message',
+            'PROCESSING_FAILED'
+          );
+        }
       } else if (result.error?.includes('Qwen')) {
         throw new OllamaConnectionError(`Local Gemma4 31B not available: ${result.error}`);
       } else {

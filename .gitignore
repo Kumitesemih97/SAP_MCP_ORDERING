@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+
+# Compiled frontend output (built from src/ via tsc)
+public/*.js
+public/*.js.map
+public/*.d.ts
+public/*.d.ts.map
+public/tools/
+
+# Logs
+*.log
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Unlazy / Claude
+GATES.md
+.unlazy/

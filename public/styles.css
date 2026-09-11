@@ -1,1301 +1,1197 @@
-/* SAP MCP Ordering System - Modern CSS Styles */
+/* =====================================================
+   SAP MCP Ordering System
+   Design: Apple HIG × SAP Fiori Horizon
+   ===================================================== */
 
-/* ================================================
-   CSS Custom Properties (Design Tokens)
-   ================================================ */
+/* =====================================================
+   Design Tokens
+   Sources:
+     Apple HIG — SF Pro font stack, 4pt grid, system colors,
+                 elevation shadows, glass blur, 12–16pt radii
+     SAP Fiori Horizon — brand blue #0070F2, 72 font stack,
+                         semantic status colors, structural layout
+   ===================================================== */
 :root {
-    /* Primary Colors */
-    --primary-color: #3b82f6;
-    --primary-dark: #2563eb;
-    --secondary-color: #6366f1;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --info-color: #06b6d4;
-    
-    /* Gray Scale */
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-300: #d1d5db;
-    --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
-    
-    /* Typography */
-    --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
-    --font-size-base: 1rem;
-    --font-size-lg: 1.125rem;
-    --font-size-xl: 1.25rem;
-    --font-size-2xl: 1.5rem;
-    --font-size-3xl: 1.875rem;
-    
-    /* Spacing Scale */
-    --spacing-1: 0.25rem;
-    --spacing-2: 0.5rem;
-    --spacing-3: 0.75rem;
-    --spacing-4: 1rem;
-    --spacing-5: 1.25rem;
-    --spacing-6: 1.5rem;
-    --spacing-8: 2rem;
-    --spacing-10: 2.5rem;
-    --spacing-12: 3rem;
-    
-    /* Shadow System */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    
-    /* Border Radius */
-    --radius-sm: 0.25rem;
-    --radius: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
+    /* --- Brand (SAP Fiori Horizon) --- */
+    --sap-brand:         #0070F2;
+    --sap-brand-hover:   #0064D9;
+    --sap-brand-active:  #0858D3;
+
+    /* --- Semantic (SAP Fiori Horizon) --- */
+    --sap-positive:      #256F3A;
+    --sap-positive-bg:   #F5FAF7;
+    --sap-negative:      #AA0808;
+    --sap-negative-bg:   #FDF0F0;
+    --sap-critical:      #E76500;
+    --sap-critical-bg:   #FEF7EE;
+    --sap-neutral:       #788FA6;
+
+    /* --- Backgrounds (Apple HIG layered surfaces) --- */
+    --bg-primary:        #FFFFFF;
+    --bg-secondary:      #F2F2F7;   /* Apple grouped background */
+    --bg-tertiary:       #FFFFFF;
+    --bg-elevated:       #FFFFFF;
+
+    /* --- Shell / Sidebar (SAP Fiori dark shell) --- */
+    --shell-bg:          #131E29;   /* SAP primary text = shell dark */
+    --shell-bg-2:        #1C2B39;
+    --shell-border:      #243447;
+    --shell-text:        #FFFFFF;
+    --shell-text-muted:  rgba(255,255,255,0.55);
+    --shell-item-hover:  rgba(255,255,255,0.08);
+    --shell-item-active: rgba(0,112,242,0.25);
+    --shell-accent:      #4DA3FF;   /* lighter brand on dark bg */
+
+    /* --- Labels (Apple HIG semantic labels) --- */
+    --label-primary:     #000000;
+    --label-secondary:   rgba(60,60,67,0.6);
+    --label-tertiary:    rgba(60,60,67,0.3);
+    --label-quaternary:  rgba(60,60,67,0.18);
+
+    /* --- Fills (Apple HIG fills) --- */
+    --fill-primary:      rgba(120,120,128,0.2);
+    --fill-secondary:    rgba(120,120,128,0.16);
+    --fill-tertiary:     rgba(120,120,128,0.12);
+
+    /* --- Separators --- */
+    --separator:         rgba(60,60,67,0.12);
+    --separator-opaque:  #D1D1D6;
+
+    /* --- Typography — SF Pro → 72 → system-ui fallback stack --- */
+    --font-ui:    -apple-system, "SF Pro Text", "72", "72full",
+                  "Helvetica Neue", Arial, sans-serif;
+    --font-display: -apple-system, "SF Pro Display", "72", "72full",
+                  "Helvetica Neue", Arial, sans-serif;
+    --font-mono:  "SF Mono", "Fira Code", "Cascadia Code",
+                  "Consolas", monospace;
+
+    /* --- Type Scale (Apple HIG Dynamic Type — pt → rem @ 16px base) --- */
+    --text-caption2:    0.6875rem;  /* 11pt */
+    --text-caption1:    0.75rem;    /* 12pt */
+    --text-footnote:    0.8125rem;  /* 13pt */
+    --text-subhead:     0.9375rem;  /* 15pt */
+    --text-callout:     1rem;       /* 16pt */
+    --text-body:        1.0625rem;  /* 17pt */
+    --text-headline:    1.0625rem;  /* 17pt semibold */
+    --text-title3:      1.25rem;    /* 20pt */
+    --text-title2:      1.375rem;   /* 22pt */
+    --text-title1:      1.75rem;    /* 28pt */
+    --text-largetitle:  2.125rem;   /* 34pt */
+
+    /* --- 4pt Spacing Grid (Apple HIG) --- */
+    --sp-1:   0.25rem;   /* 4pt */
+    --sp-2:   0.5rem;    /* 8pt */
+    --sp-3:   0.75rem;   /* 12pt */
+    --sp-4:   1rem;      /* 16pt */
+    --sp-5:   1.25rem;   /* 20pt */
+    --sp-6:   1.5rem;    /* 24pt */
+    --sp-8:   2rem;      /* 32pt */
+    --sp-10:  2.5rem;    /* 40pt */
+    --sp-12:  3rem;      /* 48pt */
+
+    /* --- Corner Radii (Apple HIG + SAP Fiori Horizon) --- */
+    --radius-xs:   4px;   /* small chips */
+    --radius-sm:   6px;   /* buttons small */
+    --radius-md:   10px;  /* buttons standard */
+    --radius-lg:   12px;  /* cards (Apple + SAP default) */
+    --radius-xl:   16px;  /* modals, sheets (SAP tiles) */
     --radius-full: 9999px;
-    
-    /* Transitions */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* --- Elevation Shadows (Apple HIG scale) --- */
+    --shadow-1:  0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.1);
+    --shadow-2:  0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.06);
+    --shadow-3:  0 8px 24px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+    --shadow-4:  0 20px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.08);
+
+    /* --- Focus ring (SAP brand, Apple style) --- */
+    --focus-ring:  0 0 0 3px rgba(0,112,242,0.32);
+
+    /* --- Transitions (Apple spring curves) --- */
+    --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-fast:   150ms var(--ease-out);
+    --t-normal: 280ms var(--ease-out);
 }
 
-/* ================================================
-   Reset and Base Styles
-   ================================================ */
+/* =====================================================
+   Reset
+   ===================================================== */
 *, *::before, *::after {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     box-sizing: border-box;
 }
 
-html {
-    font-size: 16px;
-    scroll-behavior: smooth;
-}
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 
 body {
-    font-family: var(--font-family);
-    font-size: var(--font-size-base);
-    line-height: 1.6;
-    color: var(--gray-900);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: 1.47059;   /* Apple body line-height */
+    color: var(--label-primary);
+    background: var(--bg-secondary);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: var(--spacing-4);
+    padding: var(--sp-4);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Accessibility: Screen reader only content */
 .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
-/* ================================================
+/* =====================================================
    Loading Screen
-   ================================================ */
+   ===================================================== */
 .loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: fixed; inset: 0;
+    background: var(--shell-bg);
+    display: flex; justify-content: center; align-items: center;
     z-index: 9999;
+    flex-direction: column;
+    gap: var(--sp-6);
 }
 
 .loading-content {
     text-align: center;
-    color: white;
+    color: var(--shell-text);
+    display: flex; flex-direction: column;
+    align-items: center; gap: var(--sp-4);
 }
 
 .sap-logo-loading {
-    font-size: var(--font-size-3xl);
+    font-family: var(--font-display);
+    font-size: var(--text-title1);
     font-weight: 700;
-    margin-bottom: var(--spacing-6);
-    color: white;
+    color: var(--shell-accent);
+    letter-spacing: -0.5px;
 }
 
 .loading-subtitle {
-    font-size: var(--font-size-sm);
-    opacity: 0.8;
-    margin-top: var(--spacing-2);
+    font-size: var(--text-footnote);
+    color: var(--shell-text-muted);
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid white;
+    width: 36px; height: 36px;
+    border: 2.5px solid rgba(255,255,255,0.15);
+    border-top-color: var(--shell-accent);
     border-radius: var(--radius-full);
-    animation: spin 1s linear infinite;
-    margin: 0 auto var(--spacing-4);
+    animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ================================================
-   Main Container
-   ================================================ */
+/* =====================================================
+   Main App Shell — 3-column grid
+   ===================================================== */
 .container {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-4);
     width: 100%;
-    max-width: 1400px;
-    height: 90vh;
+    max-width: 1440px;
+    height: 92vh;
     display: grid;
-    grid-template-columns: 320px 1fr 400px;
+    grid-template-columns: 280px 1fr 380px;
     overflow: hidden;
-    animation: slideIn 0.5s ease-out;
+    animation: appEnter 0.4s var(--ease-out) both;
 }
 
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes appEnter {
+    from { opacity: 0; transform: translateY(12px) scale(0.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ================================================
-   SAP Sidebar Navigation
-   ================================================ */
+/* =====================================================
+   SAP Sidebar Navigation (SAP dark shell brand)
+   ===================================================== */
 .sap-sidebar {
-    background: linear-gradient(180deg, var(--gray-800) 0%, var(--gray-900) 100%);
-    color: white;
-    padding: var(--spacing-6);
+    background: var(--shell-bg);
+    color: var(--shell-text);
+    display: flex; flex-direction: column;
     overflow-y: auto;
-    border-right: 1px solid var(--gray-700);
+    border-right: 1px solid var(--shell-border);
 }
 
+/* Logo / brand strip */
 .sap-logo {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    margin-bottom: var(--spacing-8);
-    padding-bottom: var(--spacing-6);
-    border-bottom: 1px solid var(--gray-700);
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-5) var(--sp-5) var(--sp-4);
+    border-bottom: 1px solid var(--shell-border);
 }
 
-.logo-icon { 
-    font-size: var(--font-size-2xl); 
-}
+.logo-icon { font-size: 1.5rem; }
 
-.logo-text { 
-    font-size: var(--font-size-xl);
+.logo-text {
+    font-family: var(--font-display);
+    font-size: var(--text-headline);
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--shell-accent);
+    letter-spacing: -0.2px;
 }
 
+/* Nav */
 .sap-menu {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
+    flex: 1; padding: var(--sp-4) var(--sp-3);
+    display: flex; flex-direction: column; gap: var(--sp-6);
 }
 
 .menu-section-title {
-    color: var(--gray-400);
-    font-size: var(--font-size-xs);
+    font-size: var(--text-caption1);
     font-weight: 600;
+    color: var(--shell-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--spacing-3);
+    letter-spacing: 0.08em;
+    padding: 0 var(--sp-2) var(--sp-2);
 }
 
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    padding: var(--spacing-4);
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-3);
     border-radius: var(--radius-md);
+    border: none; background: none;
+    color: rgba(255,255,255,0.82);
+    font: inherit; font-size: var(--text-subhead);
+    width: 100%; text-align: left;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    border: 1px solid transparent;
-    background: none;
-    color: inherit;
-    font: inherit;
-    width: 100%;
-    text-align: left;
+    transition: background var(--t-fast), color var(--t-fast);
+    min-height: 44px; /* Apple min touch target */
 }
 
 .menu-item:hover {
-    background: var(--gray-700);
-    border-color: var(--gray-600);
+    background: var(--shell-item-hover);
+    color: var(--shell-text);
 }
 
 .menu-item.active {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow-md);
+    background: var(--shell-item-active);
+    color: var(--shell-accent);
+    font-weight: 600;
 }
 
-.menu-icon { 
-    font-size: var(--font-size-lg); 
-    min-width: 24px; 
-}
+.menu-item:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 
-.menu-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-1);
-}
+.menu-icon { font-size: 1.1rem; min-width: 22px; }
 
-.menu-title {
-    font-weight: 500;
-    font-size: var(--font-size-sm);
-}
+.menu-content { display: flex; flex-direction: column; gap: 2px; }
+
+.menu-title { font-weight: 500; line-height: 1.2; }
 
 .menu-code {
-    font-size: var(--font-size-xs);
-    color: var(--gray-300);
-    font-family: 'Monaco', 'Consolas', monospace;
+    font-family: var(--font-mono);
+    font-size: var(--text-caption2);
+    color: var(--shell-text-muted);
 }
 
-.menu-item.active .menu-code {
-    color: rgba(255, 255, 255, 0.8);
-}
+.menu-item.active .menu-code { color: rgba(77,163,255,0.8); }
 
-/* System Information */
+/* System info panel */
 .system-info {
-    background: var(--gray-800);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-4);
-    border: 1px solid var(--gray-700);
+    margin: 0 var(--sp-3) var(--sp-4);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--shell-border);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-4);
 }
 
 .system-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-2);
-    font-size: var(--font-size-xs);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--sp-1) 0;
+    font-size: var(--text-caption1);
 }
 
-.system-item:last-child { 
-    margin-bottom: 0; 
-}
-
-.system-label { 
-    color: var(--gray-400); 
-}
+.system-label { color: var(--shell-text-muted); }
 
 .system-value {
-    color: white;
+    font-family: var(--font-mono);
+    font-size: var(--text-caption2);
+    color: var(--shell-text);
     font-weight: 500;
-    font-family: 'Monaco', 'Consolas', monospace;
+    background: rgba(255,255,255,0.07);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
 }
 
-/* ================================================
-   Main Content Area
-   ================================================ */
+/* =====================================================
+   Main Content
+   ===================================================== */
 .main-content {
-    background: var(--gray-50);
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-secondary);
+    display: flex; flex-direction: column;
     overflow: hidden;
+    border-right: 1px solid var(--separator-opaque);
 }
 
+/* Header (SAP Fiori Toolbar style, Apple spacing) */
 .header {
-    background: white;
-    padding: var(--spacing-6);
-    border-bottom: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: rgba(255,255,255,0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--separator);
+    padding: var(--sp-4) var(--sp-6);
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 10;
+    gap: var(--sp-4);
 }
 
 .header-content h1 {
-    color: var(--gray-900);
-    font-size: var(--font-size-2xl);
+    font-family: var(--font-display);
+    font-size: var(--text-title2);
     font-weight: 700;
-    margin-bottom: var(--spacing-2);
+    color: var(--label-primary);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
 }
 
 .header-content p {
-    color: var(--gray-600);
-    font-size: var(--font-size-sm);
+    font-size: var(--text-footnote);
+    color: var(--label-secondary);
+    margin-top: 2px;
 }
 
-.header-actions {
-    display: flex;
-    gap: var(--spacing-3);
-}
+.header-actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
 
-/* ================================================
-   Button Components
-   ================================================ */
+/* =====================================================
+   Buttons (Apple HIG pill/rounded, SAP brand color)
+   ===================================================== */
 .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    padding: var(--spacing-3) var(--spacing-4);
-    border-radius: var(--radius);
-    font-size: var(--font-size-sm);
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    padding: 0 var(--sp-4);
+    height: 36px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: var(--text-subhead);
     font-weight: 500;
+    border: none; cursor: pointer;
+    transition: all var(--t-fast);
+    white-space: nowrap;
     text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-family: inherit;
 }
+
+.btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
+    background: var(--sap-brand);
+    color: #fff;
+    box-shadow: var(--shadow-1);
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
+    background: var(--sap-brand-hover);
+    box-shadow: var(--shadow-2);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    background: var(--sap-brand-active);
+    transform: translateY(0);
+    box-shadow: var(--shadow-1);
 }
 
 .btn-secondary {
-    background: var(--gray-100);
-    color: var(--gray-700);
-    border: 1px solid var(--gray-300);
+    background: var(--fill-tertiary);
+    color: var(--label-primary);
+    border: 1px solid var(--separator-opaque);
 }
 
 .btn-secondary:hover {
-    background: var(--gray-200);
-    border-color: var(--gray-400);
+    background: var(--fill-secondary);
+    border-color: rgba(60,60,67,0.2);
 }
 
-/* ================================================
+/* =====================================================
    Transaction Area
-   ================================================ */
+   ===================================================== */
 .transaction-area {
-    flex: 1;
-    padding: var(--spacing-6);
+    flex: 1; padding: var(--sp-5) var(--sp-5);
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
+    display: flex; flex-direction: column; gap: var(--sp-4);
 }
 
+/* Apple-style card: white surface, subtle shadow, 12px radius */
 .transaction-card {
-    background: white;
+    background: var(--bg-elevated);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-6);
-    box-shadow: var(--shadow);
-    border: 1px solid var(--gray-200);
-    transition: all var(--transition-normal);
+    border: 1px solid var(--separator);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+    transition: box-shadow var(--t-normal), transform var(--t-normal);
 }
 
 .transaction-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
 }
 
+/* Left accent = SAP positive green for order-details card */
 .order-details-card {
-    border-left: 4px solid var(--success-color);
+    border-left: 3px solid var(--sap-positive);
 }
 
 .transaction-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-4);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 1px solid var(--separator);
+    background: rgba(255,255,255,0.6);
 }
 
 .transaction-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
+    display: flex; align-items: center; gap: var(--sp-3);
 }
 
+/* SAP transaction code badge */
 .transaction-code {
-    background: var(--primary-color);
-    color: white;
-    padding: var(--spacing-1) var(--spacing-3);
-    border-radius: var(--radius);
-    font-size: var(--font-size-xs);
+    background: var(--sap-brand);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: var(--text-caption2);
     font-weight: 600;
-    font-family: 'Monaco', 'Consolas', monospace;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.04em;
 }
 
+.transaction-info h2 {
+    font-size: var(--text-callout);
+    font-weight: 600;
+    color: var(--label-primary);
+}
+
+/* Status pills (Apple HIG system colors) */
 .transaction-status {
-    padding: var(--spacing-1) var(--spacing-3);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
+    font-size: var(--text-caption1);
     font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.01em;
 }
 
-.status-pending { 
-    background: #fef3c7; 
-    color: #92400e; 
-}
+.status-pending  { background: #FEF3C7; color: #92400E; }
+.status-success  { background: var(--sap-positive-bg); color: var(--sap-positive); }
+.status-error    { background: var(--sap-negative-bg); color: var(--sap-negative); }
 
-.status-success { 
-    background: #d1fae5; 
-    color: #065f46; 
-}
-
-.status-error { 
-    background: #fee2e2; 
-    color: #991b1b; 
+/* Welcome card body */
+.transaction-description {
+    padding: var(--sp-5);
 }
 
 .transaction-description p {
-    color: var(--gray-600);
-    margin-bottom: var(--spacing-4);
+    font-size: var(--text-callout);
+    color: var(--label-secondary);
+    line-height: 1.55;
+    margin-bottom: var(--sp-4);
 }
 
+/* Quick examples — Apple grouped inset style */
 .quick-examples {
-    background: var(--gray-50);
-    border-radius: var(--radius);
-    padding: var(--spacing-4);
-    border-left: 3px solid var(--primary-color);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--sp-4);
+    border-left: 3px solid var(--sap-brand);
 }
 
 .quick-examples h3 {
-    color: var(--gray-700);
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-2);
+    font-size: var(--text-subhead);
+    font-weight: 600;
+    color: var(--label-primary);
+    margin-bottom: var(--sp-3);
 }
 
-.quick-examples ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-1);
-}
+.quick-examples ul { list-style: none; display: flex; flex-direction: column; gap: var(--sp-2); }
 
 .quick-examples li {
-    color: var(--gray-600);
-    font-size: var(--font-size-sm);
-    padding-left: var(--spacing-4);
+    font-size: var(--text-subhead);
+    color: var(--label-secondary);
+    padding-left: var(--sp-5);
     position: relative;
 }
 
 .quick-examples li::before {
-    content: "💡";
-    position: absolute;
-    left: 0;
+    content: "›";
+    position: absolute; left: var(--sp-2);
+    color: var(--sap-brand);
+    font-weight: 700;
 }
 
-/* ================================================
-   Order Form Components
-   ================================================ */
-.order-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
-}
+/* =====================================================
+   Order Form (SAP Fiori form rows, Apple spacing)
+   ===================================================== */
+#orderForm { padding: var(--sp-5); }
 
+.order-form { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* Section = Apple grouped section card within card */
 .form-section {
-    background: var(--gray-50);
-    border-radius: var(--radius);
-    padding: var(--spacing-4);
-    border: 1px solid var(--gray-200);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--sp-4);
+    border: 1px solid var(--separator);
 }
 
 .form-section h4 {
-    color: var(--gray-900);
-    font-size: var(--font-size-lg);
+    font-size: var(--text-subhead);
     font-weight: 600;
-    margin-bottom: var(--spacing-4);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
+    color: var(--label-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: var(--sp-3);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--separator);
 }
 
 .form-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-3);
-    padding: var(--spacing-2) 0;
-    border-bottom: 1px solid var(--gray-200);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--separator);
+    min-height: 36px;
 }
 
-.form-row:last-child {
-    margin-bottom: 0;
-    border-bottom: none;
-}
+.form-row:last-child { border-bottom: none; }
 
 .form-label {
-    font-weight: 500;
-    color: var(--gray-700);
-    font-size: var(--font-size-sm);
+    font-size: var(--text-subhead);
+    color: var(--label-secondary);
+    font-weight: 400;
 }
 
 .form-value {
-    color: var(--gray-900);
-    font-size: var(--font-size-sm);
+    font-size: var(--text-subhead);
+    color: var(--label-primary);
+    font-weight: 500;
     text-align: right;
 }
 
 .form-actions {
-    margin-top: var(--spacing-6);
-    padding-top: var(--spacing-4);
-    border-top: 2px solid var(--gray-200);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--separator);
 }
 
+/* Full-width CTA — SAP positive green, Apple pill style */
 .confirm-btn {
-    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
-    color: white;
-    border: none;
-    padding: var(--spacing-4) var(--spacing-6);
-    border-radius: var(--radius);
-    cursor: pointer;
+    width: 100%; height: 44px;
+    background: var(--sap-positive);
+    color: #fff; border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: var(--text-headline);
     font-weight: 600;
-    font-size: var(--font-size-base);
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-2);
-    width: 100%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+    transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+    box-shadow: var(--shadow-1);
 }
 
 .confirm-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    background: #1E6333;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
 }
 
-.confirm-btn:disabled {
-    background: var(--gray-400);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+.confirm-btn:active:not(:disabled) { transform: translateY(0); }
+
+.confirm-btn:disabled { background: var(--sap-neutral); cursor: not-allowed; }
+
+.confirm-btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+
+/* Status+timestamp header inside order card */
+.order-status-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-4);
+    border: 1px solid var(--separator);
 }
 
-/* ================================================
-   Chat Panel
-   ================================================ */
+.status-badge {
+    font-size: var(--text-caption1); font-weight: 600;
+    padding: 4px 10px; border-radius: var(--radius-full);
+}
+
+.status-created   { background: #FEF3C7; color: #92400E; }
+.status-submitted { background: var(--sap-positive-bg); color: var(--sap-positive); }
+
+.order-timestamp {
+    font-family: var(--font-mono);
+    font-size: var(--text-caption2);
+    color: var(--label-tertiary);
+}
+
+.total-row {
+    border-top: 1.5px solid var(--sap-positive);
+    margin-top: var(--sp-2);
+    padding-top: var(--sp-2);
+    background: var(--sap-positive-bg);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    padding-left: var(--sp-2); padding-right: var(--sp-2);
+}
+
+.total-row .form-value { color: var(--sap-positive); font-size: var(--text-callout); }
+
+.success-message {
+    background: var(--sap-positive-bg);
+    color: var(--sap-positive);
+    padding: var(--sp-4);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: var(--text-subhead);
+    border: 1px solid rgba(37,111,58,0.15);
+}
+
+/* Priority badges */
+.priority-badge {
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-caption2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.priority-normal { background: var(--fill-tertiary); color: var(--label-secondary); }
+.priority-high   { background: var(--sap-critical-bg); color: var(--sap-critical); }
+.priority-urgent { background: var(--sap-negative-bg); color: var(--sap-negative); }
+
+/* =====================================================
+   AI Chat Panel
+   ===================================================== */
 .chat-panel {
-    background: white;
-    border-left: 1px solid var(--gray-200);
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-primary);
+    display: flex; flex-direction: column;
     overflow: hidden;
 }
 
+/* Chat header — dark shell to match sidebar */
 .chat-header {
-    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
-    color: white;
-    padding: var(--spacing-6);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: var(--shell-bg);
+    padding: var(--sp-4) var(--sp-5);
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--shell-border);
 }
 
-.ai-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-}
+.ai-info { display: flex; align-items: center; gap: var(--sp-3); }
 
+/* Avatar circle — SAP brand color */
 .ai-avatar {
-    width: 48px;
-    height: 48px;
-    background: var(--primary-color);
+    width: 40px; height: 40px;
+    background: var(--sap-brand);
     border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xl);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(77,163,255,0.3);
 }
 
 .ai-details h3 {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    margin-bottom: var(--spacing-1);
+    font-size: var(--text-headline); font-weight: 600;
+    color: var(--shell-text); line-height: 1.2;
 }
 
 .ai-details p {
-    font-size: var(--font-size-sm);
-    color: var(--gray-300);
-    margin-bottom: var(--spacing-2);
+    font-size: var(--text-caption1);
+    color: var(--shell-text-muted);
+    margin-top: 2px;
 }
 
 .connection-status {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-xs);
+    display: flex; align-items: center; gap: var(--sp-1);
+    font-size: var(--text-caption2);
+    color: var(--shell-text-muted);
+    margin-top: 3px;
 }
 
+/* Pulsing green dot = Apple / macOS traffic-light inspiration */
 .status-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--success-color);
+    width: 7px; height: 7px;
+    background: #30D158;   /* Apple system green */
     border-radius: var(--radius-full);
-    animation: pulse 2s infinite;
+    animation: pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.4; }
 }
 
 .chat-settings-btn {
-    background: transparent;
-    border: none;
-    color: var(--gray-300);
-    font-size: var(--font-size-lg);
+    background: transparent; border: none;
+    color: var(--shell-text-muted);
+    font-size: 1.1rem;
     cursor: pointer;
-    padding: var(--spacing-2);
-    border-radius: var(--radius);
-    transition: all var(--transition-fast);
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--t-fast), color var(--t-fast);
 }
 
 .chat-settings-btn:hover {
-    background: var(--gray-600);
-    color: white;
+    background: var(--shell-item-hover);
+    color: var(--shell-text);
 }
 
-/* ================================================
+.chat-settings-btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+
+/* =====================================================
    Chat Messages
-   ================================================ */
+   ===================================================== */
 .chat-messages {
     flex: 1;
-    padding: var(--spacing-6);
+    padding: var(--sp-4);
     overflow-y: auto;
-    background: var(--gray-50);
+    background: var(--bg-secondary);
+    display: flex; flex-direction: column; gap: var(--sp-3);
 }
 
+/* Base message — Apple iMessage-like bubbles */
 .message {
-    margin-bottom: var(--spacing-4);
-    padding: var(--spacing-4) var(--spacing-5);
+    padding: var(--sp-3) var(--sp-4);
     border-radius: var(--radius-lg);
-    max-width: 85%;
-    word-wrap: break-word;
-    animation: slideIn var(--transition-normal);
-    position: relative;
+    max-width: 88%;
+    word-break: break-word;
+    font-size: var(--text-subhead);
+    line-height: 1.5;
+    animation: msgIn 0.2s var(--ease-out) both;
 }
 
+@keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* User bubble — SAP brand blue */
 .message.user {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    background: var(--sap-brand);
+    color: #fff;
     margin-left: auto;
-    border-bottom-right-radius: var(--radius-sm);
+    border-bottom-right-radius: var(--radius-xs);
 }
 
+/* AI bubble — white card */
 .message.ai {
-    background: white;
-    color: var(--gray-900);
-    border: 1px solid var(--gray-200);
+    background: var(--bg-elevated);
+    color: var(--label-primary);
+    border: 1px solid var(--separator);
     margin-right: auto;
-    border-bottom-left-radius: var(--radius-sm);
-    box-shadow: var(--shadow-sm);
+    border-bottom-left-radius: var(--radius-xs);
+    box-shadow: var(--shadow-1);
 }
 
+/* System message — centered pill, Apple-style */
 .message.system {
-    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
-    color: white;
-    margin: 0 auto;
-    text-align: center;
-    font-size: var(--font-size-sm);
-    max-width: 70%;
+    align-self: center;
+    background: var(--fill-tertiary);
+    color: var(--label-secondary);
     border-radius: var(--radius-full);
+    font-size: var(--text-caption1);
+    padding: var(--sp-1) var(--sp-4);
+    text-align: center;
+    max-width: 76%;
+    border: 1px solid var(--separator);
 }
 
-/* ================================================
-   Chat Input Area
-   ================================================ */
-.chat-input-area {
-    padding: var(--spacing-6);
-    border-top: 1px solid var(--gray-200);
-    background: white;
-}
-
-.input-wrapper {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--spacing-3);
-    background: var(--gray-50);
-    border: 2px solid var(--gray-200);
+/* Typing animation */
+.message.loading {
+    background: var(--bg-elevated);
+    border: 1px solid var(--separator);
+    margin-right: auto;
+    padding: var(--sp-3) var(--sp-4);
+    display: flex; align-items: center; gap: var(--sp-3);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-3);
-    transition: all var(--transition-fast);
+    border-bottom-left-radius: var(--radius-xs);
+}
+
+.typing-indicator { display: flex; gap: 5px; align-items: center; }
+
+.typing-dot {
+    width: 7px; height: 7px;
+    border-radius: var(--radius-full);
+    background: var(--sap-neutral);
+    animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.30s; }
+
+@keyframes typingBounce {
+    0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+    30%          { transform: translateY(-5px); opacity: 1; }
+}
+
+/* =====================================================
+   Chat Input
+   ===================================================== */
+.chat-input-area {
+    padding: var(--sp-4);
+    border-top: 1px solid var(--separator);
+    background: var(--bg-primary);
+}
+
+/* Input pill — Apple Messages style */
+.input-wrapper {
+    display: flex; align-items: flex-end; gap: var(--sp-2);
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--separator-opaque);
+    border-radius: var(--radius-xl);
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
 .input-wrapper:focus-within {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--sap-brand);
+    box-shadow: var(--focus-ring);
 }
+
+.chat-input { flex: 1; }
 
 .chat-input textarea {
-    flex: 1;
-    border: none;
-    outline: none;
+    width: 100%; border: none; outline: none;
     background: transparent;
-    font-size: var(--font-size-base);
-    font-family: var(--font-family);
-    line-height: 1.5;
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    color: var(--label-primary);
+    line-height: 1.47;
     resize: none;
-    min-height: 24px;
-    max-height: 120px;
-    padding: var(--spacing-2) 0;
+    min-height: 24px; max-height: 120px;
+    padding: var(--sp-2) 0;
 }
 
-.chat-input textarea::placeholder {
-    color: var(--gray-400);
-}
+.chat-input textarea::placeholder { color: var(--label-tertiary); }
 
+/* Send button — SAP brand, Apple circle style */
 .send-btn {
-    background: var(--primary-color);
-    color: white;
-    border: none;
+    background: var(--sap-brand);
+    color: #fff; border: none;
     border-radius: var(--radius-full);
-    width: 40px;
-    height: 40px;
+    width: 34px; height: 34px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    transition: background var(--t-fast), transform var(--t-fast);
+    box-shadow: var(--shadow-1);
 }
 
 .send-btn:hover:not(:disabled) {
-    background: var(--primary-dark);
-    transform: scale(1.05);
+    background: var(--sap-brand-hover);
+    transform: scale(1.08);
 }
+
+.send-btn:active:not(:disabled) { transform: scale(0.96); }
 
 .send-btn:disabled {
-    background: var(--gray-300);
+    background: var(--fill-secondary);
     cursor: not-allowed;
-    transform: none;
+    box-shadow: none;
 }
 
-.send-icon {
-    font-size: var(--font-size-lg);
-}
+.send-btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+
+.send-icon { font-size: 1rem; line-height: 1; }
 
 .input-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-2);
-    font-size: var(--font-size-xs);
-    color: var(--gray-500);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: var(--sp-2);
+    font-size: var(--text-caption2);
+    color: var(--label-tertiary);
+    padding: 0 var(--sp-2);
 }
 
-.char-counter {
-    font-family: 'Monaco', 'Consolas', monospace;
-}
+.char-counter { font-family: var(--font-mono); }
 
-.input-hints {
-    display: flex;
-    gap: var(--spacing-4);
-}
+.input-hints { display: flex; gap: var(--sp-4); }
 
-.hint {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-1);
-}
+.hint { display: flex; align-items: center; gap: var(--sp-1); }
 
-/* ================================================
-   Modal Components
-   ================================================ */
+/* =====================================================
+   Settings Modal (Apple sheet style)
+   ===================================================== */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center;
     z-index: 10000;
-    backdrop-filter: blur(4px);
 }
 
 .modal {
-    background: white;
+    background: var(--bg-elevated);
     border-radius: var(--radius-xl);
-    padding: 0;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
+    max-width: 480px; width: 90%; max-height: 80vh;
     overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    animation: modalSlideIn var(--transition-normal);
+    box-shadow: var(--shadow-4);
+    animation: sheetIn 0.25s var(--ease-spring) both;
 }
 
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+@keyframes sheetIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-header {
-    background: var(--gray-800);
-    color: white;
-    padding: var(--spacing-6);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--separator);
+    padding: var(--sp-4) var(--sp-5);
+    display: flex; justify-content: space-between; align-items: center;
 }
 
 .modal-header h3 {
-    margin: 0;
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-size: var(--text-headline); font-weight: 600;
+    color: var(--label-primary);
 }
 
 .modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: var(--font-size-xl);
-    cursor: pointer;
-    padding: var(--spacing-2);
-    border-radius: var(--radius);
-    transition: all var(--transition-fast);
+    background: var(--fill-tertiary); border: none;
+    color: var(--label-secondary);
+    width: 28px; height: 28px;
+    border-radius: var(--radius-full);
+    cursor: pointer; font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--t-fast);
 }
 
-.modal-close:hover {
-    background: var(--gray-700);
-}
+.modal-close:hover { background: var(--fill-secondary); }
 
-.modal-content {
-    padding: var(--spacing-6);
-}
+.modal-content { padding: var(--sp-5); overflow-y: auto; }
 
-.setting-group {
-    margin-bottom: var(--spacing-6);
-}
+.setting-group { margin-bottom: var(--sp-5); }
 
 .setting-group label {
     display: block;
-    font-weight: 500;
-    color: var(--gray-700);
-    margin-bottom: var(--spacing-2);
-}
-
-.setting-group select,
-.setting-group input[type="range"],
-.setting-group input[type="checkbox"] {
-    font-size: var(--font-size-base);
-    transition: all var(--transition-fast);
+    font-size: var(--text-subhead); font-weight: 500;
+    color: var(--label-secondary);
+    margin-bottom: var(--sp-2);
 }
 
 .setting-group select {
     width: 100%;
-    padding: var(--spacing-3);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius);
+    height: 36px;
+    padding: 0 var(--sp-3);
+    border: 1.5px solid var(--separator-opaque);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--text-subhead);
+    color: var(--label-primary);
+    appearance: none;
+    cursor: pointer;
 }
 
-.setting-group input[type="range"] {
-    width: 100%;
-}
-
-.setting-group select:focus,
-.setting-group input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.setting-group select:focus {
+    border-color: var(--sap-brand);
+    box-shadow: var(--focus-ring);
     outline: none;
 }
 
-/* ================================================
-   Notification System
-   ================================================ */
+.setting-group input[type="range"] {
+    width: 100%; accent-color: var(--sap-brand);
+    cursor: pointer;
+}
+
+/* =====================================================
+   Notifications (Apple banner style)
+   ===================================================== */
 .notification {
     position: fixed;
-    top: var(--spacing-6);
-    right: var(--spacing-6);
-    background: white;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-4) var(--spacing-5);
-    box-shadow: var(--shadow-lg);
+    top: var(--sp-5); right: var(--sp-5);
+    background: rgba(255,255,255,0.9);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-3) var(--sp-4);
+    box-shadow: var(--shadow-3);
     z-index: 10001;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    max-width: 400px;
-    animation: slideInRight var(--transition-normal);
-    border-left: 4px solid var(--primary-color);
+    display: flex; align-items: flex-start; gap: var(--sp-3);
+    max-width: 360px; min-width: 260px;
+    border: 1px solid var(--separator);
+    animation: notifIn 0.3s var(--ease-spring) both;
 }
 
-.notification-success {
-    border-left-color: var(--success-color);
+@keyframes notifIn {
+    from { opacity: 0; transform: translateX(110%); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
-.notification-error {
-    border-left-color: var(--danger-color);
-}
+.notification-icon { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
 
-.notification-warning {
-    border-left-color: var(--warning-color);
-}
-
-.notification-info {
-    border-left-color: var(--info-color);
+.notification-message {
+    flex: 1;
+    font-size: var(--text-subhead);
+    color: var(--label-primary);
+    line-height: 1.4;
 }
 
 .notification-close {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--spacing-1);
-    margin-left: auto;
-    opacity: 0.5;
-    transition: opacity var(--transition-fast);
+    background: none; border: none;
+    cursor: pointer; opacity: 0.4;
+    font-size: 0.9rem; padding: 2px;
+    transition: opacity var(--t-fast);
+    color: var(--label-primary);
 }
 
-.notification-close:hover {
-    opacity: 1;
-}
+.notification-close:hover { opacity: 0.8; }
 
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
+/* Left accent strip */
+.notification-success { border-left: 3px solid var(--sap-positive); }
+.notification-error   { border-left: 3px solid var(--sap-negative); }
+.notification-warning { border-left: 3px solid var(--sap-critical); }
+.notification-info    { border-left: 3px solid var(--sap-brand); }
 
-/* ================================================
-   Loading States
-   ================================================ */
-.loading {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    color: var(--gray-500);
-    font-style: italic;
-}
-
-.typing-indicator {
-    display: flex;
-    gap: var(--spacing-1);
-}
-
-.typing-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--radius-full);
-    background: var(--gray-400);
-    animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) { 
-    animation-delay: -0.32s; 
-}
-
-.typing-dot:nth-child(2) { 
-    animation-delay: -0.16s; 
-}
-
-@keyframes typing {
-    0%, 80%, 100% { 
-        opacity: 0.3;
-        transform: scale(0.8);
-    }
-    40% { 
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* ================================================
-   Status Badges and Priority Indicators
-   ================================================ */
-.priority-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.priority-normal { 
-    background: #e5e7eb; 
-    color: #374151; 
-}
-
-.priority-high { 
-    background: #fef3c7; 
-    color: #92400e; 
-}
-
-.priority-urgent { 
-    background: #fee2e2; 
-    color: #991b1b; 
-}
-
-/* ================================================
+/* =====================================================
    Error Screen
-   ================================================ */
+   ===================================================== */
 .error-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: var(--spacing-6);
+    background: var(--shell-bg);
+    display: flex; justify-content: center; align-items: center;
+    padding: var(--sp-6);
 }
 
 .error-content {
-    background: white;
+    background: var(--bg-elevated);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-10);
-    max-width: 600px;
+    padding: var(--sp-10);
+    max-width: 560px; width: 100%;
     text-align: center;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-4);
 }
 
 .error-content h1 {
-    color: var(--danger-color);
-    margin-bottom: var(--spacing-6);
-    font-size: var(--font-size-3xl);
+    font-size: var(--text-title1); font-weight: 700;
+    color: var(--sap-negative);
+    margin-bottom: var(--sp-4);
 }
 
 .error-details {
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    border-radius: var(--radius);
-    padding: var(--spacing-4);
-    margin: var(--spacing-6) 0;
+    background: var(--sap-negative-bg);
+    border: 1px solid rgba(170,8,8,0.15);
+    border-radius: var(--radius-md);
+    padding: var(--sp-4);
+    margin: var(--sp-5) 0;
     text-align: left;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-caption1);
+    color: var(--sap-negative);
 }
 
 .error-actions {
-    display: flex;
-    gap: var(--spacing-4);
+    display: flex; gap: var(--sp-3);
     justify-content: center;
-    margin: var(--spacing-8) 0;
+    margin: var(--sp-6) 0;
 }
 
 .error-help {
     text-align: left;
-    margin-top: var(--spacing-8);
-    padding-top: var(--spacing-6);
-    border-top: 1px solid var(--gray-200);
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--separator);
 }
 
 .error-help h3 {
-    color: var(--gray-700);
-    margin-bottom: var(--spacing-4);
-}
-
-.error-help ul {
-    margin: var(--spacing-3) 0;
-    padding-left: var(--spacing-6);
+    font-size: var(--text-subhead); font-weight: 600;
+    color: var(--label-secondary);
+    margin-bottom: var(--sp-3);
 }
 
 .error-help li {
-    margin: var(--spacing-2) 0;
-    color: var(--gray-600);
+    font-size: var(--text-subhead);
+    color: var(--label-secondary);
+    margin: var(--sp-2) 0;
+    padding-left: var(--sp-4);
 }
 
-/* ================================================
-   Responsive Design
-   ================================================ */
-@media (max-width: 1200px) {
-    .container {
-        grid-template-columns: 280px 1fr 350px;
-    }
+.error-help code {
+    font-family: var(--font-mono);
+    font-size: var(--text-caption1);
+    background: var(--fill-tertiary);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
 }
 
-@media (max-width: 768px) {
-    :root {
-        --spacing-4: 0.75rem;
-        --spacing-6: 1rem;
-    }
-
-    body {
-        padding: var(--spacing-2);
-    }
-
-    .container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
-        height: 100vh;
-        width: 100%;
-        border-radius: var(--radius-lg);
-    }
-    
-    .sap-sidebar {
-        display: none;
-    }
-    
-    .chat-panel {
-        border-left: none;
-        border-top: 1px solid var(--gray-200);
-        max-height: 40vh;
-    }
-
-    .header {
-        flex-direction: column;
-        gap: var(--spacing-4);
-        text-align: center;
-    }
-
-    .header-actions {
-        justify-content: center;
-    }
-
-    .transaction-area {
-        padding: var(--spacing-4);
-    }
-
-    .message {
-        max-width: 95%;
-    }
-
-    .modal {
-        width: 95%;
-        margin: var(--spacing-4);
-    }
-
-    .notification {
-        top: var(--spacing-4);
-        right: var(--spacing-4);
-        left: var(--spacing-4);
-        max-width: none;
-    }
-
-    .input-hints {
-        display: none;
-    }
-
-    .error-actions {
-        flex-direction: column;
-    }
-
-    .mobile-view .form-row {
-        flex-direction: column;
-        gap: var(--spacing-1);
-        text-align: left;
-    }
-
-    .mobile-view .form-label {
-        font-weight: 600;
-    }
+/* =====================================================
+   Scrollbar — thin macOS style
+   ===================================================== */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--fill-primary);
+    border-radius: var(--radius-full);
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(120,120,128,0.36); }
 
-@media (max-width: 480px) {
-    .form-row {
-        flex-direction: column;
-        gap: var(--spacing-1);
-        text-align: left;
-    }
-
-    .form-label {
-        font-weight: 600;
-    }
-}
-
-/* ================================================
-   Accessibility and High Contrast
-   ================================================ */
-@media (prefers-contrast: high) {
-    :root {
-        --gray-50: #ffffff;
-        --gray-100: #f0f0f0;
-        --gray-200: #cccccc;
-        --gray-800: #000000;
-        --gray-900: #000000;
-    }
-
-    .message.ai {
-        border: 2px solid var(--gray-900);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Focus styles for accessibility */
+/* =====================================================
+   Focus — Apple-style ring
+   ===================================================== */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
-/* ================================================
-   Print Styles
-   ================================================ */
-@media print {
-    .sap-sidebar,
-    .chat-panel,
-    .header-actions,
-    .confirm-btn {
-        display: none !important;
-    }
+/* =====================================================
+   Responsive
+   ===================================================== */
+@media (max-width: 1100px) {
+    .container { grid-template-columns: 248px 1fr 340px; }
+}
 
+@media (max-width: 820px) {
     .container {
-        display: block;
-        box-shadow: none;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr 44vh;
+        height: 100dvh;
         border-radius: 0;
     }
 
-    .transaction-area {
-        padding: 0;
+    .sap-sidebar { display: none; }
+
+    .chat-panel {
+        border-top: 1px solid var(--separator);
+        border-right: none;
     }
 
-    .order-form {
-        page-break-inside: avoid;
+    .header { padding: var(--sp-3) var(--sp-4); }
+
+    .header-content h1 { font-size: var(--text-title3); }
+
+    .message { max-width: 94%; }
+
+    .input-hints { display: none; }
+
+    .notification { inset: auto var(--sp-3) var(--sp-3) var(--sp-3); max-width: none; }
+
+    .error-actions { flex-direction: column; }
+}
+
+/* =====================================================
+   Accessibility
+   ===================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
     }
 }
 
-/* ================================================
-   Scrollbar Styling
-   ================================================ */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+@media (prefers-contrast: high) {
+    .message.ai    { border: 2px solid var(--label-primary); }
+    .transaction-card { border: 2px solid var(--label-primary); }
+    .input-wrapper { border: 2px solid var(--label-primary); }
 }
 
-::-webkit-scrollbar-track {
-    background: var(--gray-100);
-    border-radius: var(--radius);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--gray-300);
-    border-radius: var(--radius);
-    transition: background var(--transition-fast);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-400);
+/* =====================================================
+   Print
+   ===================================================== */
+@media print {
+    .sap-sidebar, .chat-panel, .header-actions, .confirm-btn { display: none !important; }
+    .container { display: block; box-shadow: none; border-radius: 0; }
+    .transaction-area { padding: 0; }
+    .order-form { page-break-inside: avoid; }
 }

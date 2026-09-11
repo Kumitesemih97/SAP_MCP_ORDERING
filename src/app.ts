@@ -14,7 +14,7 @@ import {
   SAPTransactionCode,
   APIResponse,
   OrderSystemError,
-  QwenConnectionError,
+  OllamaConnectionError,
   MessageHandler,
   OrderSubmissionHandler
 } from './types.js';
@@ -313,7 +313,7 @@ export class SAPOrderingSystem {
       console.error('Error processing message:', error);
       this.removeTypingIndicator();
       
-      if (error instanceof QwenConnectionError) {
+      if (error instanceof OllamaConnectionError) {
         this.showQwenError(error);
       } else {
         this.addMessage(`❌ ${ERROR_MESSAGES.SYSTEM_ERROR}`, 'system');
@@ -329,7 +329,7 @@ export class SAPOrderingSystem {
    */
   private async processOrderWithQwen(message: string): Promise<void> {
     try {
-      console.log('🤖 Sending request to local Qwen 3:1.7b...');
+      console.log('🤖 Sending request to local Gemma4 31B...');
       
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -351,7 +351,7 @@ export class SAPOrderingSystem {
       this.removeTypingIndicator();
 
       if (!response.ok) {
-        throw new QwenConnectionError(`Qwen Server Error: ${response.status}`);
+        throw new OllamaConnectionError(`Ollama Server Error: ${response.status}`);
       }
 
       const result: APIResponse<OrderData> = await response.json();
@@ -359,7 +359,7 @@ export class SAPOrderingSystem {
       if (result.success && result.orderData) {
         await this.handleSuccessfulOrder(result.orderData, message);
       } else if (result.error?.includes('Qwen')) {
-        throw new QwenConnectionError(`Local Qwen 3:1.7b not available: ${result.error}`);
+        throw new OllamaConnectionError(`Local Gemma4 31B not available: ${result.error}`);
       } else {
         throw new OrderSystemError(
           result.error || 'Qwen processing failed',
@@ -368,9 +368,9 @@ export class SAPOrderingSystem {
       }
 
     } catch (error) {
-      console.error('❌ Local Qwen 3:1.7b failed:', error);
+      console.error('❌ Local Gemma4 31B failed:', error);
       
-      if (error instanceof QwenConnectionError) {
+      if (error instanceof OllamaConnectionError) {
         throw error;
       } else {
         throw new OrderSystemError(
@@ -388,10 +388,10 @@ export class SAPOrderingSystem {
   private async handleSuccessfulOrder(orderData: OrderData, originalMessage: string): Promise<void> {
     this.currentOrder = orderData;
     
-    const processingInfo = orderData.processedBy || 'Qwen 3:1.7b';
-    
+    const processingInfo = orderData.processedBy || 'Gemma4 31B';
+
     this.addMessage(`
-      🤖 <strong>Qwen 3:1.7b Analysis Complete</strong><br><br>
+      🤖 <strong>Gemma4 31B Analysis Complete</strong><br><br>
       Local AI model has analyzed your request:<br>
       • Material: ${orderData.material.name}<br>
       • Quantity: ${orderData.quantity} ${orderData.material.unit}<br>
@@ -426,7 +426,7 @@ export class SAPOrderingSystem {
       💰 Total Value: ${formatCurrency(calculateTotalWithTax(orderData.totalPrice))} (gross)<br>
       🚚 Delivery Date: <strong>${orderData.deliveryDate}</strong><br>
       📧 Confirmation: Sent to ${orderData.requestedBy}<br><br>
-      <em>✨ Powered by Ollama Qwen 3:1.7b - Order processed fully automatically!</em>
+      <em>✨ Powered by Ollama Gemma4 31B - Order processed fully automatically!</em>
     `, 'system');
     
     // Display order details (read-only)
@@ -443,13 +443,13 @@ export class SAPOrderingSystem {
   /**
    * Show Qwen connection error
    */
-  private showQwenError(error: QwenConnectionError): void {
+  private showQwenError(error: OllamaConnectionError): void {
     this.addMessage(`
-      ❌ <strong>Local Qwen 3:1.7b Not Available</strong><br><br>
+      ❌ <strong>Local Gemma4 31B Not Available</strong><br><br>
       ${error.message}<br><br>
       <strong>Solution:</strong><br>
       1. Start Ollama: <code>ollama serve</code><br>
-      2. Install Qwen: <code>ollama pull qwen:1.8b</code><br>
+      2. Install Gemma4: <code>ollama pull gemma4:31b</code><br>
       3. Reload this page<br><br>
       <em>${ERROR_MESSAGES.QWEN_UNAVAILABLE}</em>
     `, 'system');

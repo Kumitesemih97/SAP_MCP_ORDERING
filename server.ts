@@ -6,12 +6,15 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { spawn } from 'child_process';
 import axios, { AxiosResponse } from 'axios';
-import { 
-  SystemHealth, 
-  ChatRequest, 
-  ChatResponse, 
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import {
+  SystemHealth,
+  ChatRequest,
+  ChatResponse,
   HealthCheckResponse,
   OrderData,
   Material,
@@ -20,10 +23,10 @@ import {
   APIResponse,
   OllamaResponse
 } from './src/types.js';
-import { 
-  MATERIALS, 
-  VENDORS, 
-  MOCK_USER, 
+import {
+  MATERIALS,
+  VENDORS,
+  MOCK_USER,
   APP_CONFIG,
   generateOrderNumber,
   calculateDeliveryDate,
@@ -42,6 +45,66 @@ const HOST = APP_CONFIG.server.host;
 const OLLAMA_BASE_URL = APP_CONFIG.ollama.baseUrl;
 const OLLAMA_MODEL = APP_CONFIG.ollama.model;
 const FORCE_LOCAL_ONLY = APP_CONFIG.features.localOnly;
+
+// ── MCPBridge — spawns mcp-server.ts via stdio, wraps the SDK Client ─────────
+
+class MCPBridge {
+  private client: Client | null = null;
+  private connected = false;
+
+  async connect(): Promise<boolean> {
+    try {
+      const serverPath = path.join(__dirname, 'mcp-server.ts');
+      const transport = new StdioClientTransport({
+        command: path.join(__dirname, 'node_modules', '.bin', 'tsx'),
+        args: [serverPath],
+      });
+
+      this.client = new Client(
+        { name: 'sap-express-server', version: '1.0.0' },
+        { capabilities: {} }
+      );
+
+      await this.client.connect(transport);
+      this.connected = true;
+      console.log('✅ MCP server connected (stdio)');
+      return true;
+    } catch (err) {
+      console.warn('⚠️  MCP server failed to connect:', err instanceof Error ? err.message : err);
+      this.connected = false;
+      return false;
+    }
+  }
+
+  isConnected(): boolean {
+    return this.connected;
+  }
+
+  async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+    if (!this.client || !this.connected) {
+      throw new Error('MCP bridge not connected');
+    }
+    const result = await this.client.callTool({ name, arguments: args });
+    // SDK returns { content: [{type:'text', text: '...'}] }
+    const first = (result.content as Array<{ type: string; text?: string }>)[0];
+    if (first?.type === 'text' && first.text) {
+      try {
+        return JSON.parse(first.text);
+      } catch {
+        return first.text;
+      }
+    }
+    return result;
+  }
+
+  async listTools(): Promise<string[]> {
+    if (!this.client || !this.connected) return [];
+    const { tools } = await this.client.listTools();
+    return tools.map(t => t.name);
+  }
+}
+
+const mcpBridge = new MCPBridge();
 
 /**
  * Express application setup
@@ -111,9 +174,9 @@ class OllamaClient {
    * Generate response using local Qwen model
    */
   async generateResponse(prompt: string, options: any = {}): Promise<OllamaResponse> {
-    // Force only local Qwen model
+    // Force only local Gemma4 model
     if (FORCE_LOCAL_ONLY) {
-      console.log(`🤖 Qwen 3:1.7b Local Request (forced local-only mode)`);
+      console.log(`🤖 Gemma4 31B Local Request (forced local-only mode)`);
     }
 
     try {
@@ -144,7 +207,7 @@ class OllamaClient {
       );
 
       if (response.data && response.data.response) {
-        console.log(`✅ Qwen Response: ${response.data.response.substring(0, 100)}...`);
+        console.log(`✅ Gemma4 31B Response: ${response.data.response.substring(0, 100)}...`);
         return {
           success: true,
           response: response.data.response,
@@ -154,16 +217,16 @@ class OllamaClient {
           localOnly: true
         };
       } else {
-        throw new Error('Invalid response format from Qwen');
+        throw new Error('Invalid response format from Gemma4');
       }
     } catch (error) {
-      console.error('❌ Qwen 3:1.7b generation failed:', error instanceof Error ? error.message : 'Unknown error');
-      
+      console.error('❌ Gemma4 31B generation failed:', error instanceof Error ? error.message : 'Unknown error');
+
       // NO fallback in local-only mode
       if (FORCE_LOCAL_ONLY) {
         return {
           success: false,
-          error: `Local Qwen 3:1.7b model not available: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error: `Local Gemma4 31B model not available: ${error instanceof Error ? error.message : 'Unknown error'}`,
           localOnly: true
         };
       }
@@ -176,51 +239,54 @@ class OllamaClient {
   }
 
   /**
-   * Build analysis prompt for order processing
+   * Build analysis prompt for order processing — includes MCP tool-call instructions.
    */
-  private buildAnalysisPrompt(userMessage: string, context?: any): string {
-    return `You are a SAP expert analyzing order requests for a US company.
-
-IMPORTANT: You are running as local Qwen 3:1.7b model and should create precise SAP orders.
+  buildAnalysisPrompt(userMessage: string, context?: any): string {
+    return `You are a SAP procurement expert. Your job is to analyze user requests and call the right SAP tool.
 
 USER REQUEST: "${userMessage}"
 
-TASK:
-Analyze the request and extract the following information:
-- Desired quantity (number)
-- Material name or description
-- Preferred vendor (if mentioned)
-- Priority (normal, high, urgent)
-- Special notes
+AVAILABLE SAP TOOLS (call one to perform the action):
 
-AVAILABLE MATERIALS:
-- Screws M6x20 (Fastening Technology, $0.15/PCS)
-- Nuts M6 (Fastening Technology, $0.08/PCS)
-- Office Supply Set (Office Supplies, $25.50/SET)
-- Printer Paper A4 (Office Supplies, $4.99/PKG)
-- Laptop Stand (IT Accessories, $89.99/PCS)
-- Cable Channel (Electrical, $12.45/PCS)
-- Industrial Cleaner (Operating Supplies, $35.80/CAN)
+1. create_purchase_order — Create a new purchase order (ME21N)
+   Args: material_name (string), quantity (number), vendor_name? (string), priority? (Normal|High|Urgent), notes? (string)
 
-AVAILABLE VENDORS:
-- Müller Inc. (Munich) - Fastening Technology
-- Schmidt Corp. (Hamburg) - Office Supplies
-- Weber & Co (Berlin) - IT Accessories
-- Bauer Industries (Stuttgart) - Office Supplies
-- Fischer Tech Solutions (Nuremberg) - IT/Electrical
+2. search_materials — Search the material catalog
+   Args: keyword (string), category? (string)
 
-RESPONSE FORMAT (JSON ONLY, nothing else):
-{
-  "quantity": [number],
-  "material": "[exact material name from list]",
-  "category": "[category]",
-  "vendor": "[vendor or null]",
-  "priority": "[normal/high/urgent]",
-  "notes": "[special notes or empty]",
-  "confidence": [0.0-1.0]
-}
+3. search_vendors — Find vendors by name or category
+   Args: name? (string), category? (string)
 
-IMPORTANT: Respond ONLY with the JSON object, no additional explanations or text!`;
+4. check_material_stock — Check stock level for a material
+   Args: material_id (string — can be ID like MAT001 or a name keyword)
+
+5. get_order_status — Look up a purchase order
+   Args: order_number (string — e.g. PO123456)
+
+6. post_goods_receipt — Post goods receipt for a delivered order (MIGO)
+   Args: order_number (string), quantity_received (number)
+
+DECISION RULES:
+- If user wants to ORDER something → call create_purchase_order
+- If user asks about STOCK or MATERIALS → call check_material_stock or search_materials
+- If user asks about VENDORS → call search_vendors
+- If user asks about ORDER STATUS → call get_order_status
+- If user confirms DELIVERY/RECEIPT → call post_goods_receipt
+
+Respond with ONLY this JSON (no other text):
+{"tool_call": {"name": "<tool_name>", "args": {<arguments>}}}
+
+Examples:
+Request "Order 50 screws M6x20 urgently" →
+{"tool_call": {"name": "create_purchase_order", "args": {"material_name": "Screws M6x20", "quantity": 50, "priority": "Urgent"}}}
+
+Request "How many laptop stands do we have?" →
+{"tool_call": {"name": "check_material_stock", "args": {"material_id": "laptop stand"}}}
+
+Request "What is the status of PO987654?" →
+{"tool_call": {"name": "get_order_status", "args": {"order_number": "PO987654"}}}
+
+RESPOND WITH JSON ONLY. No markdown, no explanation.`;
   }
 
   /**
@@ -231,7 +297,7 @@ IMPORTANT: Respond ONLY with the JSON object, no additional explanations or text
     
     try {
       if (aiResult.success && aiResult.response && aiResult.localOnly) {
-        console.log('🤖 Processing Qwen 3:1.7b response locally...');
+        console.log('🤖 Processing Gemma4 31B response locally...');
         
         // Clean up Qwen response
         let cleanResponse = aiResult.response.trim();
@@ -240,11 +306,11 @@ IMPORTANT: Respond ONLY with the JSON object, no additional explanations or text
         const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           cleanResponse = jsonMatch[0];
-          console.log('📝 Extracted JSON from Qwen:', cleanResponse);
+          console.log('📝 Extracted JSON from Gemma4:', cleanResponse);
           
           try {
             parsedData = JSON.parse(cleanResponse);
-            console.log('✅ Successfully parsed Qwen response:', parsedData);
+            console.log('✅ Successfully parsed Gemma4 response:', parsedData);
           } catch (parseError) {
             console.warn('⚠️ JSON parse failed, using intelligent extraction');
             parsedData = this.intelligentExtraction(cleanResponse, userMessage);
@@ -254,12 +320,12 @@ IMPORTANT: Respond ONLY with the JSON object, no additional explanations or text
           parsedData = this.fallbackExtraction(userMessage);
         }
       } else if (!aiResult.success) {
-        throw new Error('Local Qwen 3:1.7b model is required');
+        throw new Error('Local Gemma4 31B model is required');
       } else {
         parsedData = this.fallbackExtraction(userMessage);
       }
     } catch (error) {
-      console.warn('Failed to parse Qwen response, using fallback analysis:', error instanceof Error ? error.message : 'Unknown error');
+      console.warn('Failed to parse Gemma4 response, using fallback analysis:', error instanceof Error ? error.message : 'Unknown error');
       parsedData = this.fallbackExtraction(userMessage);
     }
     
@@ -284,7 +350,7 @@ IMPORTANT: Respond ONLY with the JSON object, no additional explanations or text
       costCenter: MOCK_USER.costCenter,
       priority: this.normalizePriority(parsedData.priority || this.determinePriority(userMessage)),
       notes: parsedData.notes || this.extractNotes(userMessage),
-      processedBy: aiResult.localOnly ? 'Qwen 3:1.7b (local)' : 'Fallback',
+      processedBy: aiResult.localOnly ? 'Gemma4 31B (local)' : 'Fallback',
       createdAt: new Date(),
       status: 'Created'
     };
@@ -443,7 +509,7 @@ app.get('/api/health', async (req: Request, res: Response<HealthCheckResponse>) 
       status: ollamaConnected ? 'healthy' : 'degraded',
       services: {
         ollama: ollamaConnected ? 'connected' : 'disconnected',
-        mcp: 'connected' // Assume connected for now
+        mcp: mcpBridge.isConnected() ? 'connected' : 'disconnected'
       },
       uptime: process.uptime(),
       version: '2.1.0',
@@ -473,12 +539,12 @@ app.get('/api/health', async (req: Request, res: Response<HealthCheckResponse>) 
 });
 
 /**
- * Chat endpoint for order processing
+ * Chat endpoint — routes through MCP tools when possible, falls back to direct extraction.
  */
 app.post('/api/chat', async (req: Request<{}, ChatResponse, ChatRequest>, res: Response<ChatResponse>) => {
   try {
     const { message, context, options } = req.body;
-    
+
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
         success: false,
@@ -487,32 +553,97 @@ app.post('/api/chat', async (req: Request<{}, ChatResponse, ChatRequest>, res: R
     }
 
     console.log(`💬 Processing chat request: "${message.substring(0, 50)}..."`);
-    
-    // Build analysis prompt
-    const prompt = ollama['buildAnalysisPrompt'](message, context);
-    
-    // Get AI response
-    const aiResult = await ollama.generateResponse(prompt, options);
-    
-    if (!aiResult.success) {
+
+    // Step 1 — ask model which MCP tool to call
+    const toolPrompt = ollama.buildAnalysisPrompt(message, context);
+    const toolDecision = await ollama.generateResponse(toolPrompt, options);
+
+    if (!toolDecision.success) {
       return res.status(503).json({
         success: false,
-        error: aiResult.error || 'AI processing failed',
+        error: toolDecision.error || 'AI processing failed',
         requiresLocal: true
       });
     }
-    
-    // Extract order data
-    const orderData = await ollama.extractOrderData(message, aiResult);
-    
-    console.log(`✅ Order processed: ${orderData.orderNumber} - ${orderData.quantity}x ${orderData.material.name}`);
-    
+
+    const rawResponse = toolDecision.response ?? '';
+    let orderData: OrderData | null = null;
+    let mcpResult: unknown = null;
+
+    // Step 2 — detect tool_call in model response and dispatch to MCP
+    if (mcpBridge.isConnected()) {
+      const jsonMatch = rawResponse.match(/\{[\s\S]*"tool_call"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]) as {
+            tool_call: { name: string; args: Record<string, unknown> };
+          };
+          const { name: toolName, args: toolArgs } = parsed.tool_call;
+
+          console.log(`🔧 MCP tool call: ${toolName}`, toolArgs);
+          mcpResult = await mcpBridge.callTool(toolName, toolArgs);
+          console.log(`✅ MCP tool result:`, JSON.stringify(mcpResult).substring(0, 200));
+
+          // If it was create_purchase_order, extract orderData from the result
+          if (toolName === 'create_purchase_order' && mcpResult && typeof mcpResult === 'object') {
+            const r = mcpResult as Record<string, unknown>;
+            if (!r.error) {
+              const mat = findMaterialByKeyword(String(r.material ?? '')) ?? MATERIALS[0]!;
+              const ven = findVendorByName(String(r.vendor ?? '')) ?? VENDORS[0]!;
+              orderData = {
+                orderNumber: String(r.orderNumber),
+                quantity: Number(r.quantity),
+                material: mat,
+                vendor: ven,
+                totalPrice: Number(r.totalPriceNet ?? 0),
+                deliveryDate: String(r.deliveryDate),
+                deliveryDays: Number(r.deliveryDays ?? 5),
+                requestedBy: String(r.requestedBy ?? MOCK_USER.name),
+                costCenter: String(r.costCenter ?? MOCK_USER.costCenter),
+                priority: (r.priority as Priority) ?? 'Normal',
+                notes: String(r.notes ?? ''),
+                status: 'Created',
+                processedBy: 'MCP SAP Tool',
+                createdAt: new Date(),
+              };
+            }
+          }
+
+          // Step 3 — ask model for a human-readable summary of the tool result
+          const summaryPrompt = `You are a SAP assistant. A SAP tool was just executed.
+
+Tool: ${toolName}
+Result: ${JSON.stringify(mcpResult)}
+
+Write a short, friendly confirmation message (2-3 sentences) for the user. Be specific — include order number, material name, quantity, vendor, delivery date if present. No JSON. Plain text only.`;
+
+          const summaryResult = await ollama.generateResponse(summaryPrompt, { temperature: 0.4 });
+          const humanMessage = summaryResult.success
+            ? (summaryResult.response ?? 'Action completed successfully.')
+            : 'Action completed successfully.';
+
+          return res.json({
+            success: true,
+            orderData: orderData ?? undefined,
+            message: humanMessage,
+          });
+        } catch (mcpErr) {
+          console.warn('⚠️  MCP tool dispatch failed:', mcpErr instanceof Error ? mcpErr.message : mcpErr);
+          // Fall through to legacy extraction
+        }
+      }
+    }
+
+    // Step 4 — fallback: legacy direct extraction (no MCP)
+    orderData = await ollama.extractOrderData(message, toolDecision);
+    console.log(`✅ Order processed (fallback): ${orderData.orderNumber} - ${orderData.quantity}x ${orderData.material.name}`);
+
     res.json({
       success: true,
       orderData,
       message: 'Order processed successfully'
     });
-    
+
   } catch (error) {
     console.error('Chat processing error:', error);
     res.status(500).json({
@@ -566,6 +697,68 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 /**
+ * Ollama signin — spawns `ollama signin`, returns the connect URL via SSE.
+ * The client opens the URL in a new tab; Ollama handles the OAuth callback.
+ */
+app.get('/api/ollama/signin', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const proc = spawn('ollama', ['signin'], { shell: true });
+  let sent = false;
+
+  const send = (event: string, data: object) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  const handleData = (chunk: Buffer) => {
+    const text = chunk.toString();
+    // Ollama prints the URL on the line that contains /connect
+    const match = text.match(/(https:\/\/ollama\.com\/connect\?[^\s]+)/);
+    if (match && !sent) {
+      sent = true;
+      send('url', { url: match[1] });
+    }
+  };
+
+  proc.stdout.on('data', handleData);
+  proc.stderr.on('data', handleData);
+
+  proc.on('close', (code) => {
+    send('done', { success: code === 0 });
+    res.end();
+  });
+
+  req.on('close', () => proc.kill());
+});
+
+/**
+ * Auth status — checks whether the running Ollama instance can reach
+ * the cloud model (i.e. whether the user is signed in).
+ */
+app.get('/api/ollama/auth-status', async (req: Request, res: Response) => {
+  try {
+    await axios.post(
+      `${OLLAMA_BASE_URL}/api/generate`,
+      { model: OLLAMA_MODEL, prompt: '', stream: false },
+      { timeout: 6000 }
+    );
+    res.json({ authenticated: true });
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 401) {
+      res.json({ authenticated: false, reason: 'unauthorized' });
+    } else if (status === 404) {
+      res.json({ authenticated: false, reason: 'model_not_found' });
+    } else {
+      res.json({ authenticated: false, reason: 'ollama_unavailable' });
+    }
+  }
+});
+
+/**
  * 404 handler
  */
 app.use((req: Request, res: Response) => {
@@ -593,52 +786,54 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
  * Server startup with Qwen-only validation
  */
 async function startServer(): Promise<void> {
-  console.log('🚀 Starting SAP MCP Ordering System (Qwen 3:1.7b Local Only)...');
-  
-  // Check exclusively local Qwen model
-  console.log('🔍 Checking local Qwen 3:1.7b model...');
-  
+  console.log('🚀 Starting SAP MCP Ordering System (Gemma4 31B Local Only)...');
+
+  // Check exclusively local Gemma4 model
+  console.log('🔍 Checking local Gemma4 31B model...');
+
   const ollamaConnected = await ollama.checkConnection();
   if (!ollamaConnected) {
-    console.error('❌ CRITICAL: Local Ollama with Qwen 3:1.7b is required!');
+    console.error('❌ CRITICAL: Local Ollama with Gemma4 31B is required!');
     console.error('   1. Install Ollama: curl -fsSL https://ollama.ai/install.sh | sh');
     console.error('   2. Start Ollama: ollama serve');
-    console.error('   3. Install Qwen: ollama pull qwen:1.8b');
+    console.error('   3. Install Gemma4: ollama pull gemma4:31b');
     console.error('   4. Restart this server');
     
     if (FORCE_LOCAL_ONLY) {
-      console.error('   ⚠️ Server will NOT start - local Qwen is required');
-      process.exit(1);
+      console.warn('⚠️  Gemma4 31B unavailable — run: ollama pull gemma4:31b');
+      console.warn('⚠️  Starting server in degraded mode (AI features disabled)');
     }
   } else {
-    // Test Qwen model specifically
+    // Test Gemma4 model specifically
     try {
       const testResponse = await ollama.generateResponse('Test', { temperature: 0.1 });
       if (testResponse.success) {
-        console.log('✅ Qwen 3:1.7b model verified and working');
+        console.log('✅ Gemma4 31B model verified and working');
       } else {
-        throw new Error('Qwen model test failed');
+        throw new Error('Gemma4 model test failed');
       }
     } catch (error) {
-      console.error('❌ Qwen 3:1.7b model not working:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('   Install with: ollama pull qwen:1.8b');
-      if (FORCE_LOCAL_ONLY) {
-        process.exit(1);
-      }
+      console.error('❌ Gemma4 31B model not working:', error instanceof Error ? error.message : 'Unknown error');
+      console.warn('   Install with: ollama pull gemma4:31b');
+      console.warn('⚠️  Starting server in degraded mode (AI features disabled)');
     }
   }
   
+  // Connect MCP server (stdio)
+  console.log('🔌 Connecting MCP server...');
+  await mcpBridge.connect();
+
   // Start Express server
   const server = app.listen(PORT, HOST, () => {
-    console.log(`\n🌐 SAP MCP Ordering System (Qwen Local Only)`);
+    console.log(`\n🌐 SAP MCP Ordering System (Gemma4 31B Local Only)`);
     console.log(`📋 Frontend: http://${HOST}:${PORT}`);
-    console.log(`🤖 AI Model: Qwen 3:1.7b (${ollamaConnected ? 'Connected' : 'Disconnected'})`);
+    console.log(`🤖 AI Model: Gemma4 31B / gemma4:31b (${ollamaConnected ? 'Connected' : 'Disconnected'})`);
     console.log(`🔗 Health Check: http://${HOST}:${PORT}/api/health`);
-    
+
     if (ollamaConnected) {
-      console.log(`✅ Ready for SAP orders with local Qwen AI!`);
+      console.log(`✅ Ready for SAP orders with local Gemma4 31B AI!`);
     } else {
-      console.log(`❌ Qwen not available - system will not work properly`);
+      console.log(`❌ Gemma4 not available - system will not work properly`);
     }
     
     console.log('\n📝 Test the system:');
@@ -665,7 +860,8 @@ async function startServer(): Promise<void> {
 }
 
 // Start the server
-if (import.meta.url === `file://${process.argv[1]}`) {
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   startServer().catch(error => {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

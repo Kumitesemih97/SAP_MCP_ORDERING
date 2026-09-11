@@ -3,55 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SAP MCP Ordering System with AI-powered order creation using local Qwen 3:1.7b model">
-    <meta name="keywords" content="SAP, MCP, ordering, AI, Qwen, procurement, purchase orders">
+    <meta name="description" content="SAP MCP Ordering System — AI-powered procurement with Gemma4 31B">
     <meta name="author" content="SAP MCP Team">
-    <title>SAP MCP Ordering System - AI-Powered Procurement</title>
-    
+    <meta name="color-scheme" content="light">
+    <title>SAP MCP — AI Ordering</title>
+
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="main.js" as="script">
-    <link rel="preload" href="app.js" as="script">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230070F2'/><text y='.9em' x='.05em' font-size='82'>🛒</text></svg>">
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen" role="dialog" aria-label="Loading SAP MCP Ordering System">
+
+    <!-- ── Loading Screen ──────────────────────────────── -->
+    <div id="loadingScreen" class="loading-screen" role="dialog" aria-label="Loading">
         <div class="loading-content">
-            <div class="sap-logo-loading" aria-hidden="true">SAP ERP</div>
+            <div class="sap-logo-loading">SAP ERP</div>
             <div class="loading-spinner" aria-hidden="true"></div>
-            <p>Connecting to SAP system...</p>
-            <p class="loading-subtitle">Initializing Qwen 3:1.7b AI model</p>
+            <p>Connecting to SAP system…</p>
+            <p class="loading-subtitle">Initializing Gemma4 31B model</p>
         </div>
     </div>
 
-    <!-- Main Application Container -->
-    <div id="mainContainer" class="container" style="display: none;" role="application" aria-label="SAP MCP Ordering System">
-        
-        <!-- SAP Navigation Sidebar -->
-        <aside class="sap-sidebar" role="navigation" aria-label="SAP Transaction Menu">
+    <!-- ── App Shell ───────────────────────────────────── -->
+    <div id="mainContainer"
+         class="container"
+         style="display:none;"
+         role="application"
+         aria-label="SAP MCP Ordering System">
+
+        <!-- SAP Sidebar Navigation -->
+        <aside class="sap-sidebar" role="navigation" aria-label="SAP Transactions">
+
             <div class="sap-logo">
                 <span class="logo-icon" aria-hidden="true">🏢</span>
                 <span class="logo-text">SAP ERP</span>
             </div>
 
             <nav class="sap-menu">
-                <!-- Purchasing Operations Section -->
+
+                <!-- Purchase Operations -->
                 <div class="menu-section">
                     <div class="menu-section-title">Purchase Operations</div>
-                    
-                    <button class="menu-item active" 
-                            data-transaction="ME21N" 
-                            aria-label="Create Purchase Order - ME21N"
+
+                    <button class="menu-item active"
+                            data-transaction="ME21N"
+                            aria-label="Create Purchase Order — ME21N"
                             type="button">
                         <span class="menu-icon" aria-hidden="true">🛒</span>
                         <div class="menu-content">
@@ -60,9 +58,9 @@
                         </div>
                     </button>
 
-                    <button class="menu-item" 
-                            data-transaction="ME22N" 
-                            aria-label="Change Purchase Order - ME22N"
+                    <button class="menu-item"
+                            data-transaction="ME22N"
+                            aria-label="Change Purchase Order — ME22N"
                             type="button">
                         <span class="menu-icon" aria-hidden="true">✏️</span>
                         <div class="menu-content">
@@ -71,9 +69,9 @@
                         </div>
                     </button>
 
-                    <button class="menu-item" 
-                            data-transaction="ME23N" 
-                            aria-label="Display Purchase Order - ME23N"
+                    <button class="menu-item"
+                            data-transaction="ME23N"
+                            aria-label="Display Purchase Order — ME23N"
                             type="button">
                         <span class="menu-icon" aria-hidden="true">👁️</span>
                         <div class="menu-content">
@@ -83,13 +81,13 @@
                     </button>
                 </div>
 
-                <!-- Inventory Management Section -->
+                <!-- Inventory Management -->
                 <div class="menu-section">
                     <div class="menu-section-title">Inventory Management</div>
-                    
-                    <button class="menu-item" 
-                            data-transaction="MIGO" 
-                            aria-label="Goods Receipt - MIGO"
+
+                    <button class="menu-item"
+                            data-transaction="MIGO"
+                            aria-label="Goods Receipt — MIGO"
                             type="button">
                         <span class="menu-icon" aria-hidden="true">📦</span>
                         <div class="menu-content">
@@ -98,9 +96,9 @@
                         </div>
                     </button>
 
-                    <button class="menu-item" 
-                            data-transaction="MM03" 
-                            aria-label="Display Material - MM03"
+                    <button class="menu-item"
+                            data-transaction="MM03"
+                            aria-label="Display Material — MM03"
                             type="button">
                         <span class="menu-icon" aria-hidden="true">🏷️</span>
                         <div class="menu-content">
@@ -110,89 +108,89 @@
                     </button>
                 </div>
 
-                <!-- System Information -->
+                <!-- System Info -->
                 <div class="menu-section">
                     <div class="menu-section-title">System Information</div>
                     <div class="system-info" role="region" aria-label="System Status">
                         <div class="system-item">
-                            <span class="system-label">System:</span>
+                            <span class="system-label">System</span>
                             <span class="system-value">PRD</span>
                         </div>
                         <div class="system-item">
-                            <span class="system-label">Client:</span>
+                            <span class="system-label">Client</span>
                             <span class="system-value">100</span>
                         </div>
                         <div class="system-item">
-                            <span class="system-label">User:</span>
+                            <span class="system-label">User</span>
                             <span class="system-value">JDOE</span>
                         </div>
                         <div class="system-item">
-                            <span class="system-label">Language:</span>
+                            <span class="system-label">Language</span>
                             <span class="system-value">EN</span>
                         </div>
                         <div class="system-item">
-                            <span class="system-label">AI Model:</span>
-                            <span class="system-value">Qwen 3:1.7b</span>
+                            <span class="system-label">AI Model</span>
+                            <span class="system-value">Gemma4 31B</span>
                         </div>
                     </div>
                 </div>
+
             </nav>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- Main Content -->
         <main class="main-content" role="main">
             <header class="header">
                 <div class="header-content">
                     <h1>Order Processing via MCP</h1>
-                    <p>AI-powered order creation with local Qwen 3:1.7b model</p>
+                    <p>AI-powered procurement · Gemma4 31B (Local)</p>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" 
-                            id="newOrderBtn" 
+                    <button class="btn btn-primary"
+                            id="newOrderBtn"
                             aria-label="Start new order"
                             type="button">
-                        <span aria-hidden="true">➕</span> New Order
+                        + New Order
                     </button>
-                    <button class="btn btn-secondary" 
-                            id="clearOrdersBtn" 
+                    <button class="btn btn-secondary"
+                            id="clearOrdersBtn"
                             aria-label="Clear chat history"
                             type="button">
-                        <span aria-hidden="true">🗑️</span> Clear Chat
+                        Clear Chat
                     </button>
                 </div>
             </header>
 
             <div class="transaction-area" role="region" aria-label="Transaction Workspace">
+
                 <!-- Default Welcome Card -->
                 <div id="defaultCard" class="transaction-card">
                     <div class="transaction-header">
                         <div class="transaction-info">
-                            <span class="transaction-code" aria-label="Transaction code">ME21N</span>
+                            <span class="transaction-code" aria-label="Transaction ME21N">ME21N</span>
                             <h2>Create Purchase Order</h2>
                         </div>
-                        <span class="transaction-status status-pending" aria-label="Status: Ready">Ready</span>
+                        <span class="transaction-status status-pending">Ready</span>
                     </div>
-                    
                     <div class="transaction-description">
-                        <p>Use natural language to create purchase orders. The AI assistant will analyze your request and automatically create the corresponding SAP transaction.</p>
-                        
+                        <p>Describe your order in natural language. The AI assistant will analyse your request and create the SAP transaction automatically.</p>
                         <div class="quick-examples">
-                            <h3>💡 Try these examples:</h3>
+                            <h3>Try these examples</h3>
                             <ul role="list">
                                 <li>"Order 50 screws M6x20 from Müller Inc."</li>
                                 <li>"I need 10 laptop stands urgently"</li>
                                 <li>"Order 100 sheets of A4 printer paper"</li>
-                                <li>"Need 25 cable channels from Weber & Co"</li>
+                                <li>"Need 25 cable channels from Weber &amp; Co"</li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Details Card (hidden by default) -->
-                <div id="orderDetails" 
-                     class="transaction-card order-details-card" 
-                     style="display: none;"
-                     role="region" 
+                <!-- Order Details Card (inserted dynamically) -->
+                <div id="orderDetails"
+                     class="transaction-card order-details-card"
+                     style="display:none;"
+                     role="region"
                      aria-label="Order Details">
                     <div class="transaction-header">
                         <div class="transaction-info">
@@ -201,135 +199,112 @@
                         </div>
                         <span class="transaction-status status-success">Created</span>
                     </div>
-                    
-                    <div id="orderForm" role="form" aria-label="Order Form">
-                        <!-- Order form content will be inserted here dynamically -->
-                    </div>
+                    <div id="orderForm" role="form" aria-label="Order Form"></div>
                 </div>
+
             </div>
         </main>
 
         <!-- AI Chat Panel -->
-        <aside class="chat-panel" role="complementary" aria-label="AI Assistant Chat">
+        <aside class="chat-panel" role="complementary" aria-label="AI Assistant">
             <div class="chat-header">
                 <div class="ai-info">
-                    <div class="ai-avatar" aria-hidden="true">🤖</div>
+                    <div class="ai-avatar" aria-hidden="true">✦</div>
                     <div class="ai-details">
                         <h3>AI Assistant</h3>
-                        <p>Qwen 3:1.7b (Local)</p>
-                        <div class="connection-status" aria-label="Connection status: Local model active">
+                        <p>Gemma4 31B · Local</p>
+                        <div class="connection-status" aria-label="Status: local model active">
                             <span class="status-dot" aria-hidden="true"></span>
                             <span>Local Model</span>
                         </div>
                     </div>
                 </div>
-                <button class="chat-settings-btn" 
-                        id="chatSettingsBtn" 
+                <button class="chat-settings-btn"
+                        id="chatSettingsBtn"
                         aria-label="Open AI settings"
-                        type="button">⚙️</button>
+                        type="button">⚙</button>
             </div>
 
-            <div class="chat-messages" 
-                 id="chatMessages" 
-                 role="log" 
-                 aria-live="polite" 
-                 aria-label="Chat conversation">
-                <!-- Messages will be dynamically inserted here -->
-            </div>
+            <div class="chat-messages"
+                 id="chatMessages"
+                 role="log"
+                 aria-live="polite"
+                 aria-label="Conversation"></div>
 
             <div class="chat-input-area" role="region" aria-label="Message input">
                 <div class="input-wrapper">
                     <div class="chat-input">
-                        <label for="messageInput" class="sr-only">Type your order request</label>
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="Describe your order request..."
-                            rows="1"
-                            maxlength="1000"
-                            aria-describedby="charCounter inputHints"
-                            aria-label="Order request input"
-                        ></textarea>
+                        <label for="messageInput" class="sr-only">Describe your order request</label>
+                        <textarea id="messageInput"
+                                  placeholder="Describe your order…"
+                                  rows="1"
+                                  maxlength="1000"
+                                  aria-describedby="charCounter inputHints"
+                                  aria-label="Order request"></textarea>
                     </div>
-                    <button class="send-btn" 
-                            id="sendBtn" 
-                            disabled 
-                            aria-label="Send message"
+                    <button class="send-btn"
+                            id="sendBtn"
+                            disabled
+                            aria-label="Send"
                             type="button">
-                        <span class="send-icon" aria-hidden="true">➤</span>
+                        <span class="send-icon" aria-hidden="true">↑</span>
                     </button>
                 </div>
-                
                 <div class="input-footer">
-                    <div class="input-hints" id="inputHints" aria-label="Input hints">
-                        <span class="hint">
-                            <span aria-hidden="true">💡</span>
-                            <span>Tip: Be specific about quantities and materials</span>
-                        </span>
-                        <span class="hint">
-                            <span aria-hidden="true">⚡</span>
-                            <span>Ctrl+Enter to send</span>
-                        </span>
+                    <div class="input-hints" id="inputHints">
+                        <span class="hint">Tip: be specific with quantities</span>
+                        <span class="hint">⌘↵ to send</span>
                     </div>
-                    <div class="char-counter" 
-                         id="charCounter" 
-                         aria-label="Character count">0/1000</div>
+                    <div class="char-counter" id="charCounter" aria-label="Character count">0/1000</div>
                 </div>
             </div>
         </aside>
-    </div>
+
+    </div><!-- /mainContainer -->
 
     <!-- Settings Modal -->
-    <div id="settingsModal" 
-         class="modal-overlay" 
-         style="display: none;" 
-         role="dialog" 
-         aria-labelledby="settingsModalTitle" 
+    <div id="settingsModal"
+         class="modal-overlay"
+         style="display:none;"
+         role="dialog"
+         aria-labelledby="settingsModalTitle"
          aria-modal="true">
         <div class="modal">
             <div class="modal-header">
                 <h3 id="settingsModalTitle">AI Settings</h3>
-                <button class="modal-close" 
-                        id="closeSettingsModal" 
+                <button class="modal-close"
+                        id="closeSettingsModal"
                         aria-label="Close settings"
                         type="button">✕</button>
             </div>
             <div class="modal-content">
                 <div class="setting-group">
-                    <label for="aiModel">AI Model:</label>
+                    <label for="aiModel">AI Model</label>
                     <select id="aiModel" name="aiModel">
-                        <option value="qwen:1.8b" selected>Qwen 3:1.7b (Local)</option>
+                        <option value="gemma4:31b" selected>Gemma4 31B (Local)</option>
                     </select>
                 </div>
-                
                 <div class="setting-group">
                     <label for="temperature">
-                        Response Creativity: 
+                        Response Creativity —
                         <span id="temperatureValue" aria-live="polite">0.3</span>
                     </label>
-                    <input type="range" 
-                           id="temperature" 
+                    <input type="range"
+                           id="temperature"
                            name="temperature"
-                           min="0.1" 
-                           max="1.0" 
-                           step="0.1" 
-                           value="0.3"
+                           min="0.1" max="1.0" step="0.1" value="0.3"
                            aria-describedby="temperatureValue">
                 </div>
-                
                 <div class="setting-group">
-                    <label for="language">Language:</label>
+                    <label for="language">Language</label>
                     <select id="language" name="language">
                         <option value="en" selected>English (US)</option>
                         <option value="de">German</option>
                     </select>
                 </div>
-                
                 <div class="setting-group">
-                    <label for="autoSubmit">
-                        <input type="checkbox" 
-                               id="autoSubmit" 
-                               name="autoSubmit" 
-                               checked> 
+                    <label>
+                        <input type="checkbox" id="autoSubmit" name="autoSubmit" checked>
                         Auto-submit orders
                     </label>
                 </div>
@@ -337,31 +312,18 @@
         </div>
     </div>
 
-    <!-- Screen Reader Only Content -->
+    <!-- Screen reader announcements -->
     <div class="sr-only" aria-live="polite" id="srAnnouncements"></div>
 
-    <!-- Scripts -->
+    <!-- App entry point (compiled from src/main.ts) -->
     <script type="module" src="main.js"></script>
-    
-    <!-- Performance and Analytics (if needed) -->
+
     <script>
-        // Performance monitoring
         window.addEventListener('load', () => {
             if ('performance' in window) {
-                const perfData = performance.getEntriesByType('navigation')[0];
-                console.log(`Page loaded in ${Math.round(perfData.loadEventEnd - perfData.loadEventStart)}ms`);
+                const nav = performance.getEntriesByType('navigation')[0];
+                if (nav) console.log(`Page loaded in ${Math.round(nav.loadEventEnd - nav.startTime)}ms`);
             }
-        });
-        
-        // Error tracking
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', {
-                message: event.message,
-                filename: event.filename,
-                lineno: event.lineno,
-                colno: event.colno,
-                error: event.error
-            });
         });
     </script>
 </body>

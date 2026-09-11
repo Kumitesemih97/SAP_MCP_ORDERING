@@ -187,10 +187,10 @@ export interface DOMElements {
   chatMessages: HTMLElement;
   messageInput: HTMLTextAreaElement;
   sendBtn: HTMLButtonElement;
-  loadingScreen?: HTMLElement;
-  mainContainer?: HTMLElement;
-  orderDetails?: HTMLElement;
-  defaultCard?: HTMLElement;
+  loadingScreen?: HTMLElement | undefined;
+  mainContainer?: HTMLElement | undefined;
+  orderDetails?: HTMLElement | undefined;
+  defaultCard?: HTMLElement | undefined;
 }
 
 // Error Types
@@ -205,22 +205,14 @@ export class OrderSystemError extends Error {
   }
 }
 
-export class QwenConnectionError extends Error {
+export class OllamaConnectionError extends Error {
   constructor(message: string, public retryable: boolean = true) {
     super(message);
-    this.name = 'QwenConnectionError';
+    this.name = 'OllamaConnectionError';
   }
 }
 
 // Utility Types
-export type Partial<T> = {
-  [P in keyof T]?: T[P];
-};
-
-export type Required<T> = {
-  [P in keyof T]-?: T[P];
-};
-
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };

@@ -4,11 +4,12 @@
  */
 
 import { SAPOrderingSystem } from './app.js';
-import { 
-  SystemHealth, 
-  NotificationType, 
+import {
+  SystemHealth,
+  NotificationType,
   OrderSystemError,
-  QwenConnectionError 
+  OllamaConnectionError,
+  OrderData
 } from './types.js';
 import { APP_CONFIG, ERROR_MESSAGES } from './data.js';
 
@@ -152,8 +153,8 @@ class AppInitializer {
       'sessionStorage'
     ];
 
-    const missingFeatures = requiredFeatures.filter(feature => 
-      !(feature in window) || typeof window[feature] === 'undefined'
+    const missingFeatures = requiredFeatures.filter(feature =>
+      !(feature in window) || typeof (window as any)[feature] === 'undefined'
     );
 
     if (missingFeatures.length > 0) {
@@ -216,12 +217,12 @@ class AppInitializer {
       const healthData: SystemHealth = await response.json();
       console.log('🏥 Backend Health Check:', healthData);
 
-      // Check Ollama status specifically
+      // Check Ollama auth status — shows signin banner if unauthorized
       if (healthData.services?.ollama !== 'connected') {
         console.warn('⚠️ Ollama not connected - AI features may be limited');
         this.notifications.warning('AI service not available. Basic functions remain available.');
       } else {
-        console.log('✅ Qwen 3:1.7b model is ready');
+        await this.checkOllamaAuth();
       }
 
       // Check other services
@@ -241,6 +242,116 @@ class AppInitializer {
   }
 
   /**
+   * Check Ollama cloud auth — shows signin banner + polls until authenticated
+   */
+  private async checkOllamaAuth(): Promise<void> {
+    try {
+      const res = await fetch('/api/ollama/auth-status');
+      const data: { authenticated: boolean; reason?: string } = await res.json();
+
+      if (data.authenticated) {
+        console.log('✅ Gemma4 31B cloud model is ready');
+        return;
+      }
+
+      if (data.reason === 'unauthorized') {
+        await this.showOllamaSigninBanner();
+      } else {
+        console.warn('⚠️ Ollama cloud model unavailable:', data.reason);
+        this.notifications.warning('AI model unavailable. Basic functions remain active.');
+      }
+    } catch {
+      console.warn('⚠️ Could not check Ollama auth status');
+    }
+  }
+
+  /**
+   * Show signin banner, get connect URL via SSE, open it, poll until authed
+   */
+  private async showOllamaSigninBanner(): Promise<void> {
+    const banner = document.createElement('div');
+    banner.id = 'ollama-signin-banner';
+    banner.className = 'notification notification-warning ollama-signin-banner';
+    banner.style.cssText = [
+      'position:fixed', 'top:16px', 'left:50%', 'transform:translateX(-50%)',
+      'z-index:9999', 'min-width:360px', 'max-width:600px', 'padding:16px 20px',
+      'display:flex', 'align-items:center', 'gap:12px',
+      'background:rgba(255,255,255,0.92)', 'backdrop-filter:blur(20px)',
+      'border:1px solid rgba(0,112,242,0.25)', 'border-radius:12px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.12)'
+    ].join(';');
+
+    banner.innerHTML = `
+      <span style="font-size:20px">🔐</span>
+      <div style="flex:1">
+        <div style="font-weight:600;color:#131E29">Ollama sign-in required</div>
+        <div style="font-size:13px;color:#6B7280;margin-top:2px" id="ollama-signin-status">Fetching sign-in URL…</div>
+      </div>
+      <button id="ollama-signin-btn"
+              style="display:none;padding:8px 16px;background:#0070F2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+        Sign in
+      </button>
+      <div id="ollama-signin-spinner"
+           style="width:18px;height:18px;border:2px solid #E5E7EB;border-top-color:#0070F2;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+    `;
+    document.body.appendChild(banner);
+
+    // Inject spin keyframes once
+    if (!document.getElementById('spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'spin-style';
+      style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(style);
+    }
+
+    const statusEl = document.getElementById('ollama-signin-status')!;
+    const btnEl = document.getElementById('ollama-signin-btn') as HTMLButtonElement;
+    const spinnerEl = document.getElementById('ollama-signin-spinner')!;
+
+    // Get connect URL via SSE
+    const sse = new EventSource('/api/ollama/signin');
+    let connectUrl = '';
+
+    sse.addEventListener('url', (e: MessageEvent) => {
+      const { url } = JSON.parse(e.data) as { url: string };
+      connectUrl = url;
+      spinnerEl.style.display = 'none';
+      btnEl.style.display = 'block';
+      statusEl.textContent = 'Click to open Ollama sign-in in your browser';
+      btnEl.addEventListener('click', () => window.open(connectUrl, '_blank'));
+    });
+
+    sse.addEventListener('done', (e: MessageEvent) => {
+      const { success } = JSON.parse(e.data) as { success: boolean };
+      sse.close();
+      if (success) {
+        statusEl.textContent = 'Signed in — verifying…';
+      }
+    });
+
+    sse.onerror = () => {
+      sse.close();
+      statusEl.textContent = 'Could not launch sign-in. Run `ollama signin` manually.';
+      spinnerEl.style.display = 'none';
+    };
+
+    // Poll auth status every 3 s until authenticated
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/ollama/auth-status');
+        const data: { authenticated: boolean } = await res.json();
+        if (data.authenticated) {
+          clearInterval(pollInterval);
+          sse.close();
+          banner.remove();
+          this.notifications.success('Signed in to Ollama — Gemma4 31B cloud model ready!');
+          console.log('✅ Ollama cloud auth confirmed');
+        }
+      } catch { /* ignore transient errors */ }
+    }, 3000);
+  }
+
+  /**
    * Initialize the main ordering system
    */
   private async initializeOrderingSystem(): Promise<void> {
@@ -251,12 +362,12 @@ class AppInitializer {
       (window as any).orderSystem = this.orderingSystem;
       
       // Setup event listeners for system events
-      this.orderingSystem.on('orderSubmitted', (orderData) => {
+      this.orderingSystem.on('orderSubmitted', (orderData: OrderData) => {
         console.log('📋 Order submitted:', orderData);
         this.notifications.success(`Order ${orderData.orderNumber} submitted successfully!`);
       });
 
-      this.orderingSystem.on('orderConfirmed', (orderData) => {
+      this.orderingSystem.on('orderConfirmed', (orderData: OrderData) => {
         console.log('✅ Order confirmed:', orderData);
         this.notifications.success(`Order ${orderData.orderNumber} confirmed!`);
       });
@@ -528,7 +639,7 @@ class AppInitializer {
           <ul>
             <li>Check if the server is running</li>
             <li>Make sure Ollama is started with: <code>ollama serve</code></li>
-            <li>Install Qwen model: <code>ollama pull qwen:1.8b</code></li>
+            <li>Install Gemma4 model: <code>ollama pull gemma4:31b</code></li>
             <li>Check your internet connection</li>
             <li>Try a different browser</li>
           </ul>

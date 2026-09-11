@@ -18,21 +18,21 @@ import {
  */
 export const APP_CONFIG: AppConfig = {
   ollama: {
-    baseUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
-    model: 'qwen:1.8b',
+    baseUrl: (typeof process !== 'undefined' && process.env?.OLLAMA_URL) || 'http://localhost:11434',
+    model: 'gemma4:31b-cloud',
     timeout: 30000,
     temperature: 0.3,
     maxTokens: 800
   },
   server: {
-    port: parseInt(process.env.PORT || '3000'),
-    host: process.env.HOST || 'localhost',
+    port: parseInt((typeof process !== 'undefined' && process.env?.PORT) || '3000'),
+    host: (typeof process !== 'undefined' && process.env?.HOST) || 'localhost',
     cors: true
   },
   features: {
     autoSubmit: true,
     localOnly: true,
-    debugMode: process.env.NODE_ENV === 'development'
+    debugMode: (typeof process !== 'undefined' && process.env?.NODE_ENV) === 'development'
   }
 };
 
@@ -306,7 +306,7 @@ export const SYSTEM_CONSTANTS = {
  * UI Text Constants
  */
 export const UI_TEXT = {
-  WELCOME_MESSAGE: `Hello! I'm your SAP assistant with Ollama Qwen 3:1.7b integration. You can describe an order to me and I'll create it automatically for you.
+  WELCOME_MESSAGE: `Hello! I'm your SAP assistant with Ollama Gemma4 31B integration. You can describe an order to me and I'll create it automatically for you.
 
 **Examples:**
 • "I need 50 screws M6x20 from Müller Inc."
@@ -317,7 +317,7 @@ export const UI_TEXT = {
 
   SYSTEM_READY: 'MCP connection to SAP established ✅',
   
-  QWEN_ANALYZING: '🤖 AI analyzing your request',
+  QWEN_ANALYZING: '🤖 AI (Gemma4 31B) analyzing your request',
   
   TRANSACTION_EXECUTING: '🔄 Executing SAP transaction ME21N...',
   
@@ -334,7 +334,7 @@ export const UI_TEXT = {
  * Error Messages
  */
 export const ERROR_MESSAGES = {
-  QWEN_UNAVAILABLE: 'Local Qwen 3:1.7b model is required for SAP orders.',
+  QWEN_UNAVAILABLE: 'Local Gemma4 31B model is required for SAP orders.',
   BROWSER_INCOMPATIBLE: 'Browser not compatible. Missing features: ',
   BACKEND_UNREACHABLE: 'Backend not reachable',
   INVALID_ORDER_DATA: 'Invalid order data received',
@@ -356,13 +356,18 @@ export function calculateDeliveryDate(days: number = SYSTEM_CONSTANTS.DEFAULT_DE
 }
 
 export function findMaterialByKeyword(keyword: string): Material | null {
-  const lowerKeyword = keyword.toLowerCase();
-  
-  return MATERIALS.find(material => 
-    material.name.toLowerCase().includes(lowerKeyword) ||
-    material.description.toLowerCase().includes(lowerKeyword) ||
-    material.category.toLowerCase().includes(lowerKeyword)
-  ) || null;
+  const lower = keyword.toLowerCase().trim();
+  // Try exact substring first, then de-pluralised stem (strip trailing 's')
+  const stems = [lower, lower.replace(/s$/, ''), lower.replace(/es$/, '')];
+  for (const stem of stems) {
+    const hit = MATERIALS.find(m =>
+      m.name.toLowerCase().includes(stem) ||
+      m.description.toLowerCase().includes(stem) ||
+      m.category.toLowerCase().includes(stem)
+    );
+    if (hit) return hit;
+  }
+  return null;
 }
 
 export function findVendorByName(name: string): Vendor | null {

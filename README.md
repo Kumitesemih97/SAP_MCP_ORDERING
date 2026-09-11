@@ -55,7 +55,7 @@ Six SAP-style tools are exposed over the MCP stdio transport, each in its own fi
 |---|---|
 | Runtime | Node.js 22 + TypeScript 5 |
 | Server | Express 5 |
-| AI model | Gemma4 31B Cloud via [Ollama](https://ollama.ai) |
+| AI model | Gemma4 31B Cloud via [Ollama](https://ollama.com) |
 | MCP | `@modelcontextprotocol/sdk` (stdio transport) |
 | Frontend | Vanilla TypeScript, compiled to `public/` |
 | Design | Apple HIG × SAP Fiori Horizon hybrid |
@@ -65,7 +65,7 @@ Six SAP-style tools are exposed over the MCP stdio transport, each in its own fi
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18+
-- [Ollama](https://ollama.ai/) installed and running
+- [Ollama](https://ollama.com/) installed and running
 - An Ollama cloud account (free) — required for `gemma4:31b-cloud`
 
 ---

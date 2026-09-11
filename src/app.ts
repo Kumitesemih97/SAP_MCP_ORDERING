@@ -346,7 +346,8 @@ export class SAPOrderingSystem {
             materials: MATERIALS.slice(0, 10),
             vendors: VENDORS.slice(0, 5),
             localOnly: true,
-            autoSubmit: true
+            autoSubmit: true,
+            currentOrder: this.currentOrder
           }
         }),
         signal: controller.signal

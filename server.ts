@@ -242,7 +242,11 @@ class OllamaClient {
    * Build analysis prompt for order processing — includes MCP tool-call instructions.
    */
   buildAnalysisPrompt(userMessage: string, context?: any): string {
-    return `You are a SAP procurement expert. Your job is to analyze user requests and call the right SAP tool.
+    const currentOrderInfo = context?.currentOrder
+      ? `\nCURRENT ACTIVE ORDER: ${JSON.stringify(context.currentOrder)}`
+      : '';
+
+    return `You are a SAP procurement expert. Your job is to analyze user requests and call the right SAP tool.${currentOrderInfo}
 
 USER REQUEST: "${userMessage}"
 
@@ -251,23 +255,27 @@ AVAILABLE SAP TOOLS (call one to perform the action):
 1. create_purchase_order — Create a new purchase order (ME21N)
    Args: material_name (string), quantity (number), vendor_name? (string), priority? (Normal|High|Urgent), notes? (string)
 
-2. search_materials — Search the material catalog
+2. update_purchase_order — Change an existing purchase order (ME22N)
+   Args: order_number (string), material_name? (string), quantity? (number), vendor_name? (string), priority? (Normal|High|Urgent), notes? (string)
+
+3. search_materials — Search the material catalog
    Args: keyword (string), category? (string)
 
-3. search_vendors — Find vendors by name or category
+4. search_vendors — Find vendors by name or category
    Args: name? (string), category? (string)
 
-4. check_material_stock — Check stock level for a material
+5. check_material_stock — Check stock level for a material
    Args: material_id (string — can be ID like MAT001 or a name keyword)
 
-5. get_order_status — Look up a purchase order
+6. get_order_status — Look up a purchase order
    Args: order_number (string — e.g. PO123456)
 
-6. post_goods_receipt — Post goods receipt for a delivered order (MIGO)
+7. post_goods_receipt — Post goods receipt for a delivered order (MIGO)
    Args: order_number (string), quantity_received (number)
 
 DECISION RULES:
-- If user wants to ORDER something → call create_purchase_order
+- If user wants to ORDER something new → call create_purchase_order
+- If user wants to CHANGE or MODIFY an existing order (e.g. "change that order", "update PO123") → call update_purchase_order
 - If user asks about STOCK or MATERIALS → call check_material_stock or search_materials
 - If user asks about VENDORS → call search_vendors
 - If user asks about ORDER STATUS → call get_order_status
@@ -279,6 +287,9 @@ Respond with ONLY this JSON (no other text):
 Examples:
 Request "Order 50 screws M6x20 urgently" →
 {"tool_call": {"name": "create_purchase_order", "args": {"material_name": "Screws M6x20", "quantity": 50, "priority": "Urgent"}}}
+
+Request "Change that order to 100 screws" →
+{"tool_call": {"name": "update_purchase_order", "args": {"order_number": "POXXXXXX", "quantity": 100}}}
 
 Request "How many laptop stands do we have?" →
 {"tool_call": {"name": "check_material_stock", "args": {"material_id": "laptop stand"}}}
@@ -584,8 +595,8 @@ app.post('/api/chat', async (req: Request<{}, ChatResponse, ChatRequest>, res: R
           mcpResult = await mcpBridge.callTool(toolName, toolArgs);
           console.log(`✅ MCP tool result:`, JSON.stringify(mcpResult).substring(0, 200));
 
-          // If it was create_purchase_order, extract orderData from the result
-          if (toolName === 'create_purchase_order' && mcpResult && typeof mcpResult === 'object') {
+          // If it was create_purchase_order or update_purchase_order, extract orderData from the result
+          if ((toolName === 'create_purchase_order' || toolName === 'update_purchase_order') && mcpResult && typeof mcpResult === 'object') {
             const r = mcpResult as Record<string, unknown>;
             if (!r.error) {
               const mat = findMaterialByKeyword(String(r.material ?? '')) ?? MATERIALS[0]!;

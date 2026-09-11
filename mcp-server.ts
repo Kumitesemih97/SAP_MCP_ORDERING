@@ -17,6 +17,7 @@ import { searchVendorsTool, handleSearchVendors } from './src/tools/search-vendo
 import { checkMaterialStockTool, handleCheckMaterialStock } from './src/tools/check-material-stock.js';
 import { getOrderStatusTool, handleGetOrderStatus } from './src/tools/get-order-status.js';
 import { postGoodsReceiptTool, handlePostGoodsReceipt } from './src/tools/post-goods-receipt.js';
+import { updatePurchaseOrderTool, handleUpdatePurchaseOrder } from './src/tools/update-purchase-order.js';
 
 const TOOLS = [
   createPurchaseOrderTool,
@@ -25,6 +26,7 @@ const TOOLS = [
   checkMaterialStockTool,
   getOrderStatusTool,
   postGoodsReceiptTool,
+  updatePurchaseOrderTool,
 ];
 
 const HANDLERS: Record<string, (args: Record<string, unknown>) => unknown> = {
@@ -34,6 +36,7 @@ const HANDLERS: Record<string, (args: Record<string, unknown>) => unknown> = {
   check_material_stock: handleCheckMaterialStock,
   get_order_status:     handleGetOrderStatus,
   post_goods_receipt:   handlePostGoodsReceipt,
+  update_purchase_order: handleUpdatePurchaseOrder,
 };
 
 const server = new Server(

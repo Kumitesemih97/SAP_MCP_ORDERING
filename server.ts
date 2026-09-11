@@ -243,7 +243,7 @@ class OllamaClient {
    */
   buildAnalysisPrompt(userMessage: string, context?: any): string {
     const currentOrderInfo = context?.currentOrder
-      ? `\nCURRENT ACTIVE ORDER: ${JSON.stringify(context.currentOrder)}`
+      ? `\nCURRENT ACTIVE ORDER: ${JSON.stringify(context.currentOrder)}\n(If the user wants to change/modify/update THIS order, you MUST use the update_purchase_order tool)`
       : '';
 
     return `You are a SAP procurement expert. Your job is to analyze user requests and call the right SAP tool.${currentOrderInfo}
@@ -274,12 +274,14 @@ AVAILABLE SAP TOOLS (call one to perform the action):
    Args: order_number (string), quantity_received (number)
 
 DECISION RULES:
-- If user wants to ORDER something new → call create_purchase_order
-- If user wants to CHANGE or MODIFY an existing order (e.g. "change that order", "update PO123") → call update_purchase_order
+- If user wants to ORDER something NEW → call create_purchase_order
+- If user wants to CHANGE, MODIFY, or UPDATE an existing order (especially if they say "change that", "update it", "modify the order", or reference the current PO) → call update_purchase_order
 - If user asks about STOCK or MATERIALS → call check_material_stock or search_materials
 - If user asks about VENDORS → call search_vendors
 - If user asks about ORDER STATUS → call get_order_status
 - If user confirms DELIVERY/RECEIPT → call post_goods_receipt
+
+IMPORTANT: If a CURRENT ACTIVE ORDER is provided in the context and the user asks for a change to "that" or "the" order, you MUST use update_purchase_order with the order_number from the context.
 
 Respond with ONLY this JSON (no other text):
 {"tool_call": {"name": "<tool_name>", "args": {<arguments>}}}
@@ -288,8 +290,8 @@ Examples:
 Request "Order 50 screws M6x20 urgently" →
 {"tool_call": {"name": "create_purchase_order", "args": {"material_name": "Screws M6x20", "quantity": 50, "priority": "Urgent"}}}
 
-Request "Change that order to 100 screws" →
-{"tool_call": {"name": "update_purchase_order", "args": {"order_number": "POXXXXXX", "quantity": 100}}}
+Request "Change that order to 100 screws" (with PO123456 in context) →
+{"tool_call": {"name": "update_purchase_order", "args": {"order_number": "PO123456", "quantity": 100}}}
 
 Request "How many laptop stands do we have?" →
 {"tool_call": {"name": "check_material_stock", "args": {"material_id": "laptop stand"}}}
@@ -613,8 +615,8 @@ app.post('/api/chat', async (req: Request<{}, ChatResponse, ChatRequest>, res: R
                 costCenter: String(r.costCenter ?? MOCK_USER.costCenter),
                 priority: (r.priority as Priority) ?? 'Normal',
                 notes: String(r.notes ?? ''),
-                status: 'Created',
-                processedBy: 'MCP SAP Tool',
+                status: toolName === 'update_purchase_order' ? 'Updated' : 'Created',
+                processedBy: toolName === 'update_purchase_order' ? 'MCP SAP Update Tool' : 'MCP SAP Tool',
                 createdAt: new Date(),
               };
             }

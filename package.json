@@ -5,8 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node_modules/.bin/tsc && node_modules/.bin/tsx server.ts",
-    "dev": "node_modules/.bin/tsc && node_modules/.bin/nodemon --exec node_modules/.bin/tsx server.ts",
+    "start": "tsx server.ts",
+    "dev": "nodemon --exec tsx server.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "compile": "tsc && npm run copy-static",
@@ -17,7 +17,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm install && npm run build",
     "serve": "npm run build && npm start",
-    "debug": "node --inspect node_modules/.bin/tsx server.ts"
+    "debug": "node --inspect node_modules/.bin/tsx server.ts",
+    "start:win": "tsx server.ts"
   },
   "keywords": [
     "sap",

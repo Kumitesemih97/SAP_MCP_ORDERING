@@ -419,7 +419,7 @@ export class SAPOrderingSystem {
       • Vendor: ${orderData.vendor.name}<br>
       • Total Price: ${formatCurrency(orderData.totalPrice)}<br>
       • Processed by: ${processingInfo}<br><br>
-      🔄 <em>${orderData.processedBy?.toLowerCase().includes('update') || orderData.status === 'Updated' ? 'Updating SAP transaction ME22N...' : UI_TEXT.TRANSACTION_EXECUTING}</em>
+      🔄 <em>${orderData.processedBy?.toLowerCase().includes('update') ? 'Updating SAP transaction ME22N...' : UI_TEXT.TRANSACTION_EXECUTING}</em>
     `);
     
     await this.delay(1500);

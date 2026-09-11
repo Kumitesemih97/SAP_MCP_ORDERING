@@ -432,22 +432,24 @@ export class SAPOrderingSystem {
    * Automatically submit order
    */
   private async automaticOrderSubmission(orderData: OrderData): Promise<void> {
+    const isUpdate = orderData.processedBy?.toLowerCase().includes('update') || orderData.status === 'Updated';
+
     this.addMessage(`
-      ✅ <strong>SAP Transaction ME21N Successful</strong><br><br>
-      Order has been automatically created and is now being submitted...
+      ✅ <strong>SAP Transaction ${isUpdate ? 'ME22N' : 'ME21N'} Successful</strong><br><br>
+      Order has been automatically ${isUpdate ? 'updated' : 'created'} and is now being submitted...
     `);
     
     await this.delay(2000);
     
     // Submit order automatically
     this.addMessage(`
-      🚀 <strong>Order Automatically Submitted!</strong><br><br>
+      🚀 <strong>Order Automatically ${isUpdate ? 'Updated' : 'Submitted'}!</strong><br><br>
       📋 Order Number: <strong>${orderData.orderNumber}</strong><br>
       🏢 To: ${orderData.vendor.name} (${orderData.vendor.email})<br>
       💰 Total Value: ${formatCurrency(calculateTotalWithTax(orderData.totalPrice))} (gross)<br>
       🚚 Delivery Date: <strong>${orderData.deliveryDate}</strong><br>
       📧 Confirmation: Sent to ${orderData.requestedBy}<br><br>
-      <em>✨ Powered by Ollama Gemma4 31B - Order processed fully automatically!</em>
+      <em>✨ Powered by Ollama Gemma4 31B - Order ${isUpdate ? 'updated' : 'processed'} fully automatically!</em>
     `, 'system');
     
     // Display order details (read-only)
@@ -694,6 +696,7 @@ export class SAPOrderingSystem {
       'ME23N': () => this.handleME23N(),
       'MIGO': () => this.handleMIGO(),
       'MM03': () => this.handleMM03(),
+      'MIRO': () => this.addMessage(`Transaction MIRO (Invoice Verification) is now available via the AI assistant.`),
       'ME51N': () => this.addMessage(`Transaction ME51N is not yet implemented.`),
       'ME52N': () => this.addMessage(`Transaction ME52N is not yet implemented.`),
       'ME53N': () => this.addMessage(`Transaction ME53N is not yet implemented.`)

@@ -55,7 +55,7 @@ export interface ChatMessage {
   orderData?: OrderData;
 }
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -139,10 +139,10 @@ export interface NotificationData {
 // Enums and Union Types
 export type MessageType = 'user' | 'ai' | 'system';
 export type Priority = 'Normal' | 'High' | 'Urgent';
-export type OrderStatus = 'Draft' | 'Created' | 'Submitted' | 'Approved' | 'Shipped' | 'Delivered' | 'Cancelled';
+export type OrderStatus = 'Draft' | 'Created' | 'Updated' | 'Submitted' | 'Approved' | 'Pending Approval' | 'Shipped' | 'Delivered' | 'Invoiced' | 'Cancelled';
 export type UserRole = 'User' | 'Approver' | 'Administrator' | 'Purchasing';
 export type Permission = 'CREATE_ORDER' | 'APPROVE_ORDER' | 'VIEW_ALL_ORDERS' | 'MODIFY_SYSTEM' | 'ACCESS_ANALYTICS';
-export type SAPTransactionCode = 'ME21N' | 'ME22N' | 'ME23N' | 'MIGO' | 'MM03' | 'ME51N' | 'ME52N' | 'ME53N';
+export type SAPTransactionCode = 'ME21N' | 'ME22N' | 'ME23N' | 'MIGO' | 'MM03' | 'ME51N' | 'ME52N' | 'ME53N' | 'MIRO';
 export type TransactionCategory = 'Purchasing' | 'Inventory' | 'Requisition' | 'Analytics';
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -198,7 +198,7 @@ export class OrderSystemError extends Error {
   constructor(
     message: string,
     public code: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'OrderSystemError';

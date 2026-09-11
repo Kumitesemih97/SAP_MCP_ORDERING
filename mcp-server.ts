@@ -18,6 +18,8 @@ import { checkMaterialStockTool, handleCheckMaterialStock } from './src/tools/ch
 import { getOrderStatusTool, handleGetOrderStatus } from './src/tools/get-order-status.js';
 import { postGoodsReceiptTool, handlePostGoodsReceipt } from './src/tools/post-goods-receipt.js';
 import { updatePurchaseOrderTool, handleUpdatePurchaseOrder } from './src/tools/update-purchase-order.js';
+import { approvePurchaseOrderTool, handleApprovePurchaseOrder } from './src/tools/approve-purchase-order.js';
+import { verifyInvoiceTool, handleVerifyInvoice } from './src/tools/verify-invoice.js';
 
 const TOOLS = [
   createPurchaseOrderTool,
@@ -27,6 +29,8 @@ const TOOLS = [
   getOrderStatusTool,
   postGoodsReceiptTool,
   updatePurchaseOrderTool,
+  approvePurchaseOrderTool,
+  verifyInvoiceTool,
 ];
 
 const HANDLERS: Record<string, (args: Record<string, unknown>) => unknown> = {
@@ -37,6 +41,8 @@ const HANDLERS: Record<string, (args: Record<string, unknown>) => unknown> = {
   get_order_status:     handleGetOrderStatus,
   post_goods_receipt:   handlePostGoodsReceipt,
   update_purchase_order: handleUpdatePurchaseOrder,
+  approve_purchase_order: handleApprovePurchaseOrder,
+  verify_invoice:       handleVerifyInvoice,
 };
 
 const server = new Server(

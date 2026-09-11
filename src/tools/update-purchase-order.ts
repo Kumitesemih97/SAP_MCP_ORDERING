@@ -4,16 +4,15 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import {
   MATERIALS,
-  VENDORS,
+  MOCK_USER,
   generateOrderNumber,
   calculateDeliveryDate,
   findMaterialByKeyword,
-  findVendorByName,
-  getVendorsByCategory,
   formatCurrency,
 } from '../data.js';
-import type { Priority, OrderStatus } from '../types.js';
+import type { Priority } from '../types.js';
 import { orderStore } from './order-store.js';
+import { poService } from '../services/po-service.js';
 
 export const updatePurchaseOrderTool: Tool = {
   name: 'update_purchase_order',
@@ -53,94 +52,92 @@ export const updatePurchaseOrderTool: Tool = {
 };
 
 export function handleUpdatePurchaseOrder(args: Record<string, unknown>) {
-  const orderNumber = String(args.order_number ?? '');
-  if (!orderNumber) return { error: 'order_number is required' };
+  try {
+    const orderNumber = String(args.order_number ?? '');
+    if (!orderNumber) throw new Error('order_number is required');
 
-  const existingOrder = orderStore.get(orderNumber);
-  if (!existingOrder) {
-    return { error: `Purchase Order ${orderNumber} not found in the system` };
-  }
-
-  // Default values from existing order
-  let material = existingOrder.material;
-  let quantity = existingOrder.quantity;
-  let vendor = existingOrder.vendor;
-  let priority = existingOrder.priority;
-  let notes = existingOrder.notes;
-
-  // Apply updates
-  if (args.material_name) {
-    const materialName = String(args.material_name);
-    const newMaterial = findMaterialByKeyword(materialName);
-    if (!newMaterial) return { error: `Material "${materialName}" not found` };
-    material = newMaterial;
-  }
-
-  if (args.quantity !== undefined) {
-    const newQuantity = Number(args.quantity);
-    if (newQuantity <= 0) return { error: 'quantity must be > 0' };
-
-    // Validate stock and quantities for the material (could be the updated one)
-    const stock = material.stockLevel ?? Infinity;
-    if (newQuantity > stock) {
-      return { error: `Insufficient stock for ${material.name}. Requested: ${newQuantity}, Available: ${stock} ${material.unit}` };
+    const existingOrder = orderStore.get(orderNumber);
+    if (!existingOrder) {
+      throw new Error(`Purchase Order ${orderNumber} not found in the system`);
     }
-    const min = material.minOrderQuantity ?? 1;
-    const max = material.maxOrderQuantity ?? Infinity;
-    if (newQuantity < min) return { error: `Minimum order quantity for ${material.name} is ${min} ${material.unit}` };
-    if (newQuantity > max) return { error: `Maximum order quantity for ${material.name} is ${max} ${material.unit}` };
 
-    quantity = newQuantity;
+    // Default values from existing order
+    let material = existingOrder.material;
+    let quantity = existingOrder.quantity;
+    let vendor = existingOrder.vendor;
+    let priority = existingOrder.priority;
+    let notes = existingOrder.notes;
+
+    // Apply updates
+    if (args.material_name) {
+      const materialName = String(args.material_name);
+      const newMaterial = findMaterialByKeyword(materialName);
+      if (!newMaterial) throw new Error(`Material "${materialName}" not found`);
+      material = newMaterial;
+    }
+
+    if (args.quantity !== undefined) {
+      const newQuantity = Number(args.quantity);
+      if (newQuantity <= 0) throw new Error('quantity must be > 0');
+      quantity = newQuantity;
+    }
+
+    if (args.vendor_name) {
+      const vendorName = String(args.vendor_name);
+      // Use service to resolve vendor based on material category or name
+      vendor = poService.resolveVendor(material, vendorName);
+    }
+
+    if (args.priority) {
+      priority = args.priority as Priority;
+    }
+
+    if (args.notes) {
+      notes = String(args.notes);
+    }
+
+    // Domain Validation via poService
+    poService.validateMaterialStock(material, quantity);
+
+    const totalPrice = quantity * material.price;
+    poService.verifyBudget(MOCK_USER.costCenter, totalPrice);
+
+    const deliveryDays = poService.calculateDeliveryDays(priority);
+    const status = poService.determineStatus(totalPrice);
+
+    const updatedOrder = {
+      ...existingOrder,
+      quantity,
+      material,
+      vendor,
+      totalPrice,
+      deliveryDate: calculateDeliveryDate(deliveryDays),
+      deliveryDays,
+      priority,
+      notes,
+      status,
+      updatedAt: new Date(),
+    };
+
+    orderStore.set(orderNumber, updatedOrder);
+
+    return {
+      success: true,
+      orderNumber,
+      transaction: 'ME22N',
+      material: material.name,
+      quantity,
+      unit: material.unit,
+      vendor: vendor.name,
+      totalPrice: formatCurrency(totalPrice),
+      totalPriceNet: totalPrice,
+      deliveryDate: calculateDeliveryDate(deliveryDays),
+      deliveryDays,
+      priority,
+      status: updatedOrder.status,
+      notes,
+    };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
   }
-
-  if (args.vendor_name) {
-    const vendorName = String(args.vendor_name);
-    const newVendor = findVendorByName(vendorName);
-    if (!newVendor) return { error: `Vendor "${vendorName}" not found` };
-    vendor = newVendor;
-  }
-
-  if (args.priority) {
-    priority = args.priority as Priority;
-  }
-
-  if (args.notes) {
-    notes = String(args.notes);
-  }
-
-  const deliveryDays = priority === 'Urgent' ? 2 : priority === 'High' ? 4 : 7;
-  const totalPrice = quantity * material.price;
-
-  const updatedOrder = {
-    ...existingOrder,
-    quantity,
-    material,
-    vendor,
-    totalPrice,
-    deliveryDate: calculateDeliveryDate(deliveryDays),
-    deliveryDays,
-    priority,
-    notes,
-    status: 'Created' as OrderStatus,
-    updatedAt: new Date(),
-  };
-
-  orderStore.set(orderNumber, updatedOrder);
-
-  return {
-    success: true,
-    orderNumber,
-    transaction: 'ME22N',
-    material: material.name,
-    quantity,
-    unit: material.unit,
-    vendor: vendor.name,
-    totalPrice: formatCurrency(totalPrice),
-    totalPriceNet: totalPrice,
-    deliveryDate: calculateDeliveryDate(deliveryDays),
-    deliveryDays,
-    priority,
-    status: 'Created',
-    notes,
-  };
 }

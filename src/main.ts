@@ -153,9 +153,10 @@ class AppInitializer {
       'sessionStorage'
     ];
 
-    const missingFeatures = requiredFeatures.filter(feature =>
-      !(feature in window) || typeof (window as any)[feature] === 'undefined'
-    );
+    const missingFeatures = requiredFeatures.filter(feature => {
+      const win = window as any;
+      return !(feature in win) || typeof win[feature] === 'undefined';
+    });
 
     if (missingFeatures.length > 0) {
       throw new OrderSystemError(
@@ -670,7 +671,7 @@ class AppInitializer {
    * Debounce utility function
    */
   private debounce(func: Function, wait: number): (...args: any[]) => void {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
     return (...args: any[]) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func.apply(this, args), wait);

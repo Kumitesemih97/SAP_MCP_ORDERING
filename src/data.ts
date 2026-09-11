@@ -3,14 +3,14 @@
  * Centralized data management for the application
  */
 
-import { 
-  Material, 
-  Vendor, 
-  UserData, 
-  TransactionData, 
+import {
+  Material,
+  Vendor,
+  UserData,
+  TransactionData,
   AppConfig,
   SAPTransactionCode,
-  UserRole 
+  UserRole
 } from './types.js';
 
 /**
@@ -127,8 +127,28 @@ export const MATERIALS: Material[] = [
     stockLevel: 120,
     minOrderQuantity: 10,
     maxOrderQuantity: 200
+  },
+  {
+    id: "MAT009",
+    name: "High-End Industrial Server",
+    description: "Enterprise rack server, 64-core, 512GB RAM",
+    unit: "PCS",
+    price: 12500.00,
+    category: "IT Accessories",
+    stockLevel: 2,
+    minOrderQuantity: 1,
+    maxOrderQuantity: 5
   }
 ];
+
+/**
+ * Mock Cost Center Budgets
+ */
+export const COST_CENTER_BUDGETS: Record<string, number> = {
+  "4200": 50000, // Procurement Dept
+  "5000": 10000, // IT Dept
+  "6000": 5000,   // Facilities
+};
 
 /**
  * Mock Vendors Database
@@ -147,7 +167,7 @@ export const VENDORS: Vendor[] = [
     isActive: true
   },
   {
-    id: "V002", 
+    id: "V002",
     name: "Schmidt Corp.",
     location: "Hamburg, Germany",
     contact: "Anna Schmidt",
@@ -161,7 +181,7 @@ export const VENDORS: Vendor[] = [
   {
     id: "V003",
     name: "Weber & Co",
-    location: "Berlin, Germany", 
+    location: "Berlin, Germany",
     contact: "Michael Weber",
     email: "sales@weber-co.de",
     phone: "+49 30 555666777",
@@ -223,7 +243,7 @@ export const SAP_TRANSACTIONS: TransactionData[] = [
   },
   {
     code: "ME22N" as SAPTransactionCode,
-    name: "Change Purchase Order", 
+    name: "Change Purchase Order",
     description: "Modify existing purchase orders",
     isActive: true,
     icon: "✏️",
@@ -232,7 +252,7 @@ export const SAP_TRANSACTIONS: TransactionData[] = [
   {
     code: "ME23N" as SAPTransactionCode,
     name: "Display Purchase Order",
-    description: "View purchase order details and history", 
+    description: "View purchase order details and history",
     isActive: true,
     icon: "👁️",
     category: "Purchasing"
@@ -281,7 +301,7 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
  */
 export const VENDOR_SPECIALIZATIONS: Record<string, string[]> = {
   "V001": ["Fastening Technology", "Safety Equipment"],
-  "V002": ["Office Supplies", "Operating Supplies"], 
+  "V002": ["Office Supplies", "Operating Supplies"],
   "V003": ["IT Accessories", "Electrical"],
   "V004": ["Office Supplies", "Operating Supplies"],
   "V005": ["IT Accessories", "Electrical", "Safety Equipment"]
@@ -303,6 +323,18 @@ export const SYSTEM_CONSTANTS = {
 };
 
 /**
+ * Purchase Order Business Configuration
+ */
+export const PO_CONFIG = {
+  APPROVAL_THRESHOLD: 500,
+  DELIVERY_DAYS: {
+    Urgent: 2,
+    High: 4,
+    Normal: 7,
+  } as Record<string, number>,
+};
+
+/**
  * UI Text Constants
  */
 export const UI_TEXT = {
@@ -310,23 +342,23 @@ export const UI_TEXT = {
 
 **Examples:**
 • "I need 50 screws M6x20 from Müller Inc."
-• "Order 10 laptop stands for the IT department"  
+• "Order 10 laptop stands for the IT department"
 • "Urgently need 100 sheets of A4 printer paper"
 
 *Just speak naturally with me!*`,
 
   SYSTEM_READY: 'MCP connection to SAP established ✅',
-  
+
   QWEN_ANALYZING: '🤖 AI (Gemma4 31B) analyzing your request',
-  
+
   TRANSACTION_EXECUTING: '🔄 Executing SAP transaction ME21N...',
-  
+
   ORDER_SUBMITTED: '🚀 Order automatically submitted!',
-  
+
   READY_FOR_NEXT: '🆕 Ready for the next order!',
-  
+
   CHAT_CLEARED: '🧹 Chat history cleared',
-  
+
   NEW_ORDER_STARTED: '🆕 New order started'
 };
 
@@ -372,7 +404,7 @@ export function findMaterialByKeyword(keyword: string): Material | null {
 
 export function findVendorByName(name: string): Vendor | null {
   const lowerName = name.toLowerCase();
-  
+
   return VENDORS.find(vendor =>
     vendor.name.toLowerCase().includes(lowerName) ||
     vendor.contact.toLowerCase().includes(lowerName)

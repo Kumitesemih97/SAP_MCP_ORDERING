@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "outDir": "./public",
-    "rootDir": "./src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -21,13 +21,16 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "server.ts",
+    "mcp-server.ts",
+    "mcp-client.ts"
   ],
   "exclude": [
     "node_modules",

@@ -4,18 +4,15 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import {
   MATERIALS,
-  VENDORS,
   MOCK_USER,
   generateOrderNumber,
   calculateDeliveryDate,
   findMaterialByKeyword,
-  findVendorByName,
-  getVendorsByCategory,
   formatCurrency,
 } from '../data.js';
 import type { Priority } from '../types.js';
 import { orderStore } from './order-store.js';
-import type { OrderStatus } from '../types.js';
+import { poService } from '../services/po-service.js';
 
 export const createPurchaseOrderTool: Tool = {
   name: 'create_purchase_order',
@@ -51,75 +48,70 @@ export const createPurchaseOrderTool: Tool = {
 };
 
 export function handleCreatePurchaseOrder(args: Record<string, unknown>) {
-  const materialName = String(args.material_name ?? '');
-  const quantity = Number(args.quantity ?? 0);
-  const vendorName = args.vendor_name ? String(args.vendor_name) : undefined;
-  const priority = (args.priority as Priority) ?? 'Normal';
-  const notes = args.notes ? String(args.notes) : '';
+  try {
+    const materialName = String(args.material_name ?? '');
+    const quantity = Number(args.quantity ?? 0);
+    const vendorName = args.vendor_name ? String(args.vendor_name) : undefined;
+    const priority = (args.priority as Priority) ?? 'Normal';
+    const notes = args.notes ? String(args.notes) : '';
 
-  if (!materialName) return { error: 'material_name is required' };
-  if (quantity <= 0) return { error: 'quantity must be > 0' };
+    if (!materialName) throw new Error('material_name is required');
+    if (quantity <= 0) throw new Error('quantity must be > 0');
 
-  const material = findMaterialByKeyword(materialName);
-  if (!material) {
-    return { error: `Material "${materialName}" not found. Available: ${MATERIALS.map(m => m.name).join(', ')}` };
+    const material = findMaterialByKeyword(materialName);
+    if (!material) {
+      throw new Error(`Material "${materialName}" not found. Available: ${MATERIALS.map(m => m.name).join(', ')}`);
+    }
+
+    // Domain Validation via poService
+    poService.validateMaterialStock(material, quantity);
+    const vendor = poService.resolveVendor(material, vendorName);
+
+    const totalPrice = quantity * material.price;
+    poService.verifyBudget(MOCK_USER.costCenter, totalPrice);
+
+    const deliveryDays = poService.calculateDeliveryDays(priority);
+    const orderNumber = generateOrderNumber();
+    const status = poService.determineStatus(totalPrice);
+
+    orderStore.set(orderNumber, {
+      orderNumber,
+      quantity,
+      material,
+      vendor,
+      totalPrice,
+      deliveryDate: calculateDeliveryDate(deliveryDays),
+      deliveryDays,
+      requestedBy: MOCK_USER.name,
+      costCenter: MOCK_USER.costCenter,
+      priority,
+      notes,
+      status,
+      processedBy: 'MCP SAP Tool',
+      createdAt: new Date(),
+    });
+
+    return {
+      success: true,
+      orderNumber,
+      transaction: 'ME21N',
+      material: material.name,
+      materialId: material.id,
+      quantity,
+      unit: material.unit,
+      vendor: vendor.name,
+      vendorId: vendor.id,
+      totalPrice: formatCurrency(totalPrice),
+      totalPriceNet: totalPrice,
+      deliveryDate: calculateDeliveryDate(deliveryDays),
+      deliveryDays,
+      priority,
+      status,
+      costCenter: MOCK_USER.costCenter,
+      requestedBy: MOCK_USER.name,
+      notes,
+    };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
   }
-
-  const stock = material.stockLevel ?? Infinity;
-  if (quantity > stock) {
-    return { error: `Insufficient stock. Requested: ${quantity}, Available: ${stock} ${material.unit}` };
-  }
-  const min = material.minOrderQuantity ?? 1;
-  const max = material.maxOrderQuantity ?? Infinity;
-  if (quantity < min) return { error: `Minimum order quantity is ${min} ${material.unit}` };
-  if (quantity > max) return { error: `Maximum order quantity is ${max} ${material.unit}` };
-
-  let vendor = vendorName ? findVendorByName(vendorName) : null;
-  if (vendorName && !vendor) return { error: `Vendor "${vendorName}" not found` };
-  if (!vendor) {
-    const byCategory = getVendorsByCategory(material.category);
-    vendor = byCategory[0] ?? VENDORS[0]!;
-  }
-
-  const deliveryDays = priority === 'Urgent' ? 2 : priority === 'High' ? 4 : 7;
-  const orderNumber = generateOrderNumber();
-  const totalPrice = quantity * material.price;
-
-  orderStore.set(orderNumber, {
-    orderNumber,
-    quantity,
-    material,
-    vendor,
-    totalPrice,
-    deliveryDate: calculateDeliveryDate(deliveryDays),
-    deliveryDays,
-    requestedBy: MOCK_USER.name,
-    costCenter: MOCK_USER.costCenter,
-    priority,
-    notes,
-    status: 'Created' as OrderStatus,
-    processedBy: 'MCP SAP Tool',
-    createdAt: new Date(),
-  });
-
-  return {
-    success: true,
-    orderNumber,
-    transaction: 'ME21N',
-    material: material.name,
-    materialId: material.id,
-    quantity,
-    unit: material.unit,
-    vendor: vendor.name,
-    vendorId: vendor.id,
-    totalPrice: formatCurrency(totalPrice),
-    totalPriceNet: totalPrice,
-    deliveryDate: calculateDeliveryDate(deliveryDays),
-    deliveryDays,
-    priority,
-    status: 'Created',
-    costCenter: MOCK_USER.costCenter,
-    requestedBy: MOCK_USER.name,
-    notes,
-  };
 }

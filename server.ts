@@ -378,7 +378,7 @@ RESPOND WITH JSON ONLY. No markdown, no explanation.`;
     // Search for quantity
     const quantityMatch = response.match(/["']?quantity["']?\s*:\s*(\d+)/i) || 
                         response.match(/(\d+)\s*(pieces?|pcs)/i);
-    result.quantity = quantityMatch ? parseInt(quantityMatch[1]) : null;
+    result.quantity = quantityMatch ? parseInt(quantityMatch[1] || '0') : null;
     
     // Search for material
     const materialMatch = response.match(/["']?material["']?\s*:\s*["']([^"']+)["']/i);
@@ -424,7 +424,7 @@ RESPOND WITH JSON ONLY. No markdown, no explanation.`;
     for (const pattern of patterns) {
       const match = message.match(pattern);
       if (match) {
-        return parseInt(match[1]);
+        return parseInt(match[1] || '0');
       }
     }
     
@@ -479,7 +479,7 @@ RESPOND WITH JSON ONLY. No markdown, no explanation.`;
     
     // Fallback: search in user message
     const material = findMaterialByKeyword(userMessage);
-    return material || MATERIALS[0]; // Ultimate fallback
+    return material || MATERIALS[0]!; // Ultimate fallback
   }
 
   /**
@@ -492,7 +492,7 @@ RESPOND WITH JSON ONLY. No markdown, no explanation.`;
     }
     
     // Default to first available vendor
-    return VENDORS[0];
+    return VENDORS[0]!;
   }
 }
 
@@ -651,7 +651,7 @@ Write a short, friendly confirmation message (2-3 sentences) for the user. Be sp
     orderData = await ollama.extractOrderData(message, toolDecision);
     console.log(`✅ Order processed (fallback): ${orderData.orderNumber} - ${orderData.quantity}x ${orderData.material.name}`);
 
-    res.json({
+    return res.json({
       success: true,
       orderData,
       message: 'Order processed successfully'
@@ -659,7 +659,7 @@ Write a short, friendly confirmation message (2-3 sentences) for the user. Be sp
 
   } catch (error) {
     console.error('Chat processing error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Internal server error'
     });
@@ -874,7 +874,7 @@ async function startServer(): Promise<void> {
 
 // Start the server
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   startServer().catch(error => {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

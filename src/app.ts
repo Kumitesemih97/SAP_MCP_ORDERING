@@ -330,7 +330,10 @@ export class SAPOrderingSystem {
   private async processOrderWithQwen(message: string): Promise<void> {
     try {
       console.log('🤖 Sending request to local Gemma4 31B...');
-      
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for AI generation
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -345,9 +348,11 @@ export class SAPOrderingSystem {
             localOnly: true,
             autoSubmit: true
           }
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       this.removeTypingIndicator();
 
       if (!response.ok) {
@@ -355,7 +360,7 @@ export class SAPOrderingSystem {
       }
 
       const result: APIResponse<OrderData> = await response.json();
-      
+
       if (result.success && result.orderData) {
         await this.handleSuccessfulOrder(result.orderData, message);
       } else if (result.error?.includes('Qwen')) {
@@ -368,8 +373,14 @@ export class SAPOrderingSystem {
       }
 
     } catch (error) {
+      this.removeTypingIndicator();
       console.error('❌ Local Gemma4 31B failed:', error);
-      
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        this.addMessage(`❌ <strong>Request Timed Out</strong><br><br>The AI took too long to respond. Please try again.`, 'system');
+        return;
+      }
+
       if (error instanceof OllamaConnectionError) {
         throw error;
       } else {

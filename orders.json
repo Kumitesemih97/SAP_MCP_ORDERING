@@ -73,5 +73,43 @@
     "status": "Invoiced",
     "processedBy": "MCP SAP Tool",
     "createdAt": "2026-09-11T23:30:55.330Z"
+  },
+  "PO674145": {
+    "orderNumber": "PO674145",
+    "quantity": 61,
+    "material": {
+      "id": "MAT001",
+      "name": "Screws M6x20",
+      "description": "Hex screws DIN 933, galvanized steel",
+      "unit": "PCS",
+      "price": 0.15,
+      "category": "Fastening Technology",
+      "stockLevel": 5000,
+      "minOrderQuantity": 50,
+      "maxOrderQuantity": 10000
+    },
+    "vendor": {
+      "id": "V001",
+      "name": "Müller Inc.",
+      "location": "Munich, Germany",
+      "contact": "Hans Müller",
+      "email": "orders@mueller-inc.com",
+      "phone": "+49 89 987654321",
+      "rating": 4.5,
+      "paymentTerms": "30 days net",
+      "deliveryTerms": "Standard shipping included",
+      "isActive": true
+    },
+    "totalPrice": 9.15,
+    "deliveryDate": "9/19/2026",
+    "deliveryDays": 7,
+    "requestedBy": "John Doe",
+    "costCenter": "4200",
+    "priority": "Normal",
+    "notes": "",
+    "status": "Created",
+    "processedBy": "MCP SAP Tool",
+    "createdAt": "2026-09-11T23:34:34.186Z",
+    "updatedAt": "2026-09-11T23:34:52.771Z"
   }
 }
